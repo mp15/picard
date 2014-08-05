@@ -364,6 +364,7 @@
         <package-and-document-command title="CollectTargetedPcrMetrics"         main-class="picard.analysis.directed.CollectTargetedPcrMetrics"/>
         <package-and-document-command title="CollectRnaSeqMetrics"              main-class="picard.analysis.CollectRnaSeqMetrics"/>
         <package-and-document-command title="CollectWgsMetrics"                 main-class="picard.analysis.CollectWgsMetrics"/>
+        <package-and-document-command title="CollectFastWgsMetrics"                 main-class="picard.analysis.CollectFastWgsMetrics"/>
         <package-and-document-command title="CompareSAMs"                       main-class="picard.sam.CompareSAMs"/>
         <package-and-document-command title="CreateSequenceDictionary"          main-class="picard.sam.CreateSequenceDictionary"/>
         <package-and-document-command title="DownsampleSam"                     main-class="picard.sam.DownsampleSam"/>

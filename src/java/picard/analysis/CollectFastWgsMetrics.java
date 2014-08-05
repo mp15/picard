@@ -30,7 +30,7 @@ import java.util.List;
  *
  * @author tfennell
  */
-public class CollectWgsMetrics extends CommandLineProgram {
+public class CollectFastWgsMetrics extends CommandLineProgram {
 
     @Usage
     public final String usage = "Computes a number of metrics that are useful for evaluating coverage and performance of " +
@@ -128,9 +128,9 @@ public class CollectWgsMetrics extends CommandLineProgram {
 
         final SamLocusIterator iterator = new SamLocusIterator(in);
         final List<SamRecordFilter> filters   = new ArrayList<SamRecordFilter>();
-        final CountingFilter dupeFilter       = new CountingDuplicateFilter();
-        final CountingFilter mapqFilter       = new CountingMapQFilter(MINIMUM_MAPPING_QUALITY);
-        final CountingPairedFilter pairFilter = new CountingPairedFilter();
+        final FastCountingFilter dupeFilter       = new FastCountingDuplicateFilter();
+        final FastCountingFilter mapqFilter       = new FastCountingMapQFilter(MINIMUM_MAPPING_QUALITY);
+        final FastCountingPairedFilter pairFilter = new FastCountingPairedFilter();
         filters.add(mapqFilter);
         filters.add(dupeFilter);
         filters.add(pairFilter);
@@ -227,7 +227,7 @@ public class CollectWgsMetrics extends CommandLineProgram {
  * A SamRecordFilter that counts the number of aligned bases in the reads which it filters out. Abstract and designed
  * to be subclassed to implement the desired filter.
  */
-abstract class CountingFilter implements SamRecordFilter {
+abstract class FastCountingFilter implements SamRecordFilter {
     private long filteredRecords = 0;
     private long filteredBases = 0;
 
@@ -256,19 +256,19 @@ abstract class CountingFilter implements SamRecordFilter {
 }
 
 /** Counting filter that discards reads that have been marked as duplicates. */
-class CountingDuplicateFilter extends CountingFilter {
+class FastCountingDuplicateFilter extends FastCountingFilter {
     @Override public boolean reallyFilterOut(final SAMRecord record) { return record.getDuplicateReadFlag(); }
 }
 
 /** Counting filter that discards reads below a configurable mapping quality threshold. */
-class CountingMapQFilter extends CountingFilter {
+class FastCountingMapQFilter extends FastCountingFilter {
     private final int minMapq;
-    CountingMapQFilter(final int minMapq) { this.minMapq = minMapq; }
+    FastCountingMapQFilter(final int minMapq) { this.minMapq = minMapq; }
     @Override public boolean reallyFilterOut(final SAMRecord record) { return record.getMappingQuality() < minMapq; }
 }
 
 /** Counting filter that discards reads that are unpaired in sequencing and paired reads who's mates are not mapped. */
-class CountingPairedFilter extends CountingFilter {
+class FastCountingPairedFilter extends FastCountingFilter {
     @Override public boolean reallyFilterOut(final SAMRecord record) { return !record.getReadPairedFlag() || record.getMateUnmappedFlag(); }
 }
 
