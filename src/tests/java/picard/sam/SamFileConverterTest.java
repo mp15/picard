@@ -93,7 +93,6 @@ public class SamFileConverterTest {
         samFiles.add(fileToCompare);
 
         compareSAMs.samFiles = samFiles;
-        // compareSAMs.
         compareSAMs.doWork();
 
         assertTrue(compareSAMs.areEqual());
