@@ -24,6 +24,8 @@
 
 package picard.sam.markduplicates;
 
+import htsjdk.samtools.util.SamRecordIndex;
+import htsjdk.samtools.util.SamRecordTrackingBuffer;
 import picard.PicardException;
 import htsjdk.samtools.util.Histogram;
 import picard.sam.DuplicationMetrics;
@@ -32,7 +34,6 @@ import htsjdk.samtools.util.PeekableIterator;
 import htsjdk.samtools.*;
 import htsjdk.samtools.DuplicateScoringStrategy.ScoringStrategy;
 import htsjdk.samtools.util.CloseableIterator;
-import picard.sam.markduplicates.util.SAMRecordTrackingBuffer;
 import picard.sam.markduplicates.util.*;
 
 import java.io.File;
@@ -73,7 +74,7 @@ public class MarkDuplicatesWithMateCigarIterator implements SAMRecordIterator {
      * duplicate marking flag.  By definition, any record in the toMarkQueue will also be in the outputBuffer,
      * so we can omit checking the size of the toMarkQueue in some cases.
      */
-    private SAMRecordTrackingBuffer outputBuffer = null;
+    private SamRecordTrackingBuffer outputBuffer = null;
 
     /**
      * The queue that stores the records that currently are not marked as duplicates.  These need to be kept until
@@ -128,7 +129,7 @@ public class MarkDuplicatesWithMateCigarIterator implements SAMRecordIterator {
 
         this.header = header;
         this.backingIterator = new PeekableIterator<SAMRecord>(iterator);
-        this.outputBuffer = new SAMRecordTrackingBuffer(maxRecordsInRam, blockSize, tmpDirs, header, SamRecordIndexDuplicateFlag.class);
+        this.outputBuffer = new SamRecordTrackingBuffer<SamRecordIndexDuplicateFlag>(maxRecordsInRam, blockSize, tmpDirs, header, SamRecordIndexDuplicateFlag.class);
 
         this.removeDuplicates = removeDuplicates;
         this.skipPairsWithNoMateCigar = skipPairsWithNoMateCigar;

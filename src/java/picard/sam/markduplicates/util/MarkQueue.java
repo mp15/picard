@@ -4,6 +4,7 @@ import htsjdk.samtools.DuplicateScoringStrategy;
 import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.SAMUtils;
+import htsjdk.samtools.util.SamRecordTrackingBuffer;
 import picard.PicardException;
 import picard.sam.DuplicationMetrics;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
@@ -160,7 +161,7 @@ public class MarkQueue {
      * have been seen.  All comparable read ends and the returned read end will have their seen duplicate flag set.  We use
      * the minimum genomic distance to determine when all the comparable reads have been examined.
      */
-    public ReadEndsForMateCigar poll(final SAMRecordTrackingBuffer outputBuffer,
+    public ReadEndsForMateCigar poll(final SamRecordTrackingBuffer outputBuffer,
                            final SAMFileHeader header,
                            final OpticalDuplicateFinder opticalDuplicateFinder,
                            final LibraryIdGenerator libraryIdGenerator) {
@@ -233,7 +234,7 @@ public class MarkQueue {
      */
     private boolean debug = false; // TODO: remove me
     public void add(final ReadEndsForMateCigar other,
-                    final SAMRecordTrackingBuffer outputBuffer,
+                    final SamRecordTrackingBuffer outputBuffer,
                     final DuplicationMetrics metrics) {
         /**
          * OK this is the most complicated function in this class.  Please pay attention.

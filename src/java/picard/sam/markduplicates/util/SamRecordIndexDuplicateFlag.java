@@ -1,6 +1,7 @@
 package picard.sam.markduplicates.util;
 
 import htsjdk.samtools.SAMRecord;
+import htsjdk.samtools.util.SamRecordIndex;
 
 /**
  * @author nhomer
@@ -11,7 +12,7 @@ public class SamRecordIndexDuplicateFlag extends SamRecordIndex {
         super();
     }
 
-    public SamRecordIndexDuplicateFlag(final SAMRecord record, final int recordIndex) {
+    public SamRecordIndexDuplicateFlag(final SAMRecord record, final long recordIndex) {
         super(record, recordIndex);
     }
 

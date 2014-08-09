@@ -4,9 +4,9 @@ import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.SAMReadGroupRecord;
 import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.SAMUtils;
+import htsjdk.samtools.util.SamRecordIndex;
 import picard.PicardException;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -113,7 +113,6 @@ public class ReadEndsForMateCigar extends ReadEnds {
     public SamRecordIndex getsamRecordIndex() { return this.samRecordIndex; }
     public SAMRecord getRecord() { return this.samRecordIndex.getRecord(); }
     public String getRecordReadName() { return this.samRecordIndex.getRecord().getReadName(); }
-    public int getRecordIndex() { return this.samRecordIndex.getRecordIndex(); }
 
     @Override
     public boolean isPaired() { return this.getRecord().getReadPairedFlag(); }
