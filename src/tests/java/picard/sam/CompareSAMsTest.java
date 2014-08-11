@@ -36,8 +36,8 @@ public class CompareSAMsTest {
                             final int expectedUnmappedLeft, final int expectedUnmappedRight, final int expectedMissingLeft,
                             final int expectedMissingRight, final boolean areEqual) {
         final String[] samFiles = {
-                new File(TEST_FILES_DIR, f1).getAbsolutePath(),
-                new File(TEST_FILES_DIR, f2).getAbsolutePath()
+                new File(f1).getAbsolutePath(),
+                new File(f2).getAbsolutePath()
         };
         CompareSAMs compareSAMs = new CompareSAMs();
         compareSAMs.instanceMain(samFiles);
@@ -131,5 +131,8 @@ public class CompareSAMsTest {
         testHelper("unmapped_first.sam", "unmapped_first.sam", 1, 0, 1, 0, 0, 0, 0, true);
     }
 
-
+    @Test public void testCramBam() {
+        testHelper("/seq/tng/jcarey/cram/B084HABXX.6.aligned.duplicates_marked.cram", "/seq/tng/jcarey/cram/B084HABXX.6.aligned.duplicates_marked.new.bam",
+                2, 0, 0, 0, 0, 0, 0, true);
+    }
 }
