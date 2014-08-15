@@ -349,6 +349,10 @@
 
         <!-- The order of these elements determines the order they appear in the on-line help -->
         <!-- If you don't want to generate on-line doc for a command, use package-command instead of package-and-document-command -->
+
+        <package-and-document-command title="CollectWgsMetrics"                 main-class="picard.analysis.CollectWgsMetrics"/>
+        <package-and-document-command title="CollectFastWgsMetrics"                 main-class="picard.analysis.CollectFastWgsMetrics"/>
+        <!--
         <package-and-document-command title="AddCommentsToBam"                  main-class="picard.sam.AddCommentsToBam"/>
         <package-and-document-command title="AddOrReplaceReadGroups"            main-class="picard.sam.AddOrReplaceReadGroups"/>
         <package-and-document-command title="BamToBfq"                          main-class="picard.fastq.BamToBfq"/>
@@ -363,8 +367,6 @@
         <package-and-document-command title="CollectMultipleMetrics"            main-class="picard.analysis.CollectMultipleMetrics"/>
         <package-and-document-command title="CollectTargetedPcrMetrics"         main-class="picard.analysis.directed.CollectTargetedPcrMetrics"/>
         <package-and-document-command title="CollectRnaSeqMetrics"              main-class="picard.analysis.CollectRnaSeqMetrics"/>
-        <package-and-document-command title="CollectWgsMetrics"                 main-class="picard.analysis.CollectWgsMetrics"/>
-        <package-and-document-command title="CollectFastWgsMetrics"                 main-class="picard.analysis.CollectFastWgsMetrics"/>
         <package-and-document-command title="CompareSAMs"                       main-class="picard.sam.CompareSAMs"/>
         <package-and-document-command title="CreateSequenceDictionary"          main-class="picard.sam.CreateSequenceDictionary"/>
         <package-and-document-command title="DownsampleSam"                     main-class="picard.sam.DownsampleSam"/>
@@ -384,6 +386,7 @@
         <package-and-document-command title="MergeBamAlignment"                 main-class="picard.sam.MergeBamAlignment"/>
         <package-and-document-command title="MergeSamFiles"                     main-class="picard.sam.MergeSamFiles"/>
         <package-and-document-command title="MergeVcfs"                         main-class="picard.vcf.MergeVcfs">
+
             <package-filesets>
                 <fileset dir=".command_tmp">
                     <include name="org/apache/commons/logging/**/*"/>
@@ -418,6 +421,7 @@
         </package-and-document-command>
         <package-and-document-command title="ValidateSamFile"                   main-class="picard.sam.ValidateSamFile"/>
         <package-and-document-command title="ViewSam"                           main-class="picard.sam.ViewSam"/>
+        -->
     </target>
 
     <!-- ALL -->

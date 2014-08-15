@@ -1,10 +1,10 @@
 package picard.analysis;
 
-import htsjdk.samtools.AlignmentBlock;
-import htsjdk.samtools.SAMFileReader;
-import htsjdk.samtools.SAMRecord;
-import htsjdk.samtools.filter.SamRecordFilter;
-import htsjdk.samtools.filter.SecondaryAlignmentFilter;
+import htsjdk.samtools2.AlignmentBlock;
+import htsjdk.samtools2.SAMFileReader;
+import htsjdk.samtools2.SAMRecord;
+import htsjdk.samtools2.filter.SamRecordFilter;
+import htsjdk.samtools2.filter.SecondaryAlignmentFilter;
 import htsjdk.samtools.metrics.MetricBase;
 import htsjdk.samtools.metrics.MetricsFile;
 import htsjdk.samtools.reference.ReferenceSequence;
@@ -12,8 +12,8 @@ import htsjdk.samtools.reference.ReferenceSequenceFileWalker;
 import htsjdk.samtools.util.Histogram;
 import htsjdk.samtools.util.IOUtil;
 import htsjdk.samtools.util.Log;
-import htsjdk.samtools.util.ProgressLogger;
-import htsjdk.samtools.util.SamLocusIterator;
+import htsjdk.samtools2.util.ProgressLogger;
+import htsjdk.samtools2.util.SamLocusIterator;
 import picard.cmdline.CommandLineProgram;
 import picard.cmdline.Option;
 import picard.cmdline.StandardOptionDefinitions;
