@@ -112,11 +112,14 @@ public class CollectFastWgsMetrics extends CommandLineProgram {
     }
 
     public static void main(final String[] args) {
-        new CollectWgsMetrics().instanceMainWithExit(args);
+        new CollectFastWgsMetrics().instanceMainWithExit(args);
     }
 
     @Override
     protected int doWork() {
+        System.out.println("### Using samtools2!!");
+
+
         IOUtil.assertFileIsReadable(INPUT);
         IOUtil.assertFileIsWritable(OUTPUT);
         IOUtil.assertFileIsReadable(REFERENCE_SEQUENCE);

@@ -350,8 +350,9 @@
         <!-- The order of these elements determines the order they appear in the on-line help -->
         <!-- If you don't want to generate on-line doc for a command, use package-command instead of package-and-document-command -->
 
+        <package-and-document-command title="CollectFastWgsMetrics"             main-class="picard.analysis.CollectFastWgsMetrics"/>
         <package-and-document-command title="CollectWgsMetrics"                 main-class="picard.analysis.CollectWgsMetrics"/>
-        <package-and-document-command title="CollectFastWgsMetrics"                 main-class="picard.analysis.CollectFastWgsMetrics"/>
+
         <!--
         <package-and-document-command title="AddCommentsToBam"                  main-class="picard.sam.AddCommentsToBam"/>
         <package-and-document-command title="AddOrReplaceReadGroups"            main-class="picard.sam.AddOrReplaceReadGroups"/>
