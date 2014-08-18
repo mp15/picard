@@ -24,10 +24,10 @@
 
 package picard.analysis;
 
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.SAMFileReader;
 import htsjdk.samtools.SAMReadGroupRecord;
-import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.SAMSequenceDictionary;
 import htsjdk.samtools.metrics.MetricsFile;
 import htsjdk.samtools.reference.ReferenceSequence;
@@ -124,7 +124,7 @@ public class CollectGcBiasMetrics extends CommandLineProgram {
             throw new PicardException("Header of input file " + INPUT.getAbsolutePath() + " indicates that it is not coordinate sorted.  " +
             "If you believe the records are in coordinate order, pass option ASSUME_SORTED=true.  If not, sort the file with SortSam.");
         }
-        final PeekableIterator<SAMRecord> iterator = new PeekableIterator<SAMRecord>(sam.iterator());
+        final PeekableIterator<ReadRecord> iterator = new PeekableIterator<ReadRecord>(sam.iterator());
         final ReferenceSequenceFile referenceFile = ReferenceSequenceFileFactory.getReferenceSequenceFile(REFERENCE_SEQUENCE);
 
         {
@@ -150,7 +150,7 @@ public class CollectGcBiasMetrics extends CommandLineProgram {
 
             final byte[] gc = calculateAllGcs(refBases, windowsByGc, lastWindowStart);
             while (iterator.hasNext() && iterator.peek().getReferenceIndex() == ref.getContigIndex()) {
-                final SAMRecord rec = iterator.next();
+                final ReadRecord rec = iterator.next();
 
                 if (!rec.getReadPairedFlag() || rec.getFirstOfPairFlag()) ++this.totalClusters;
 
@@ -179,7 +179,7 @@ public class CollectGcBiasMetrics extends CommandLineProgram {
 
         // Finish up the reads, presumably all unaligned
         while (iterator.hasNext()) {
-            final SAMRecord rec = iterator.next();
+            final ReadRecord rec = iterator.next();
             if (!rec.getReadPairedFlag() || rec.getFirstOfPairFlag()) ++this.totalClusters;
 
         }

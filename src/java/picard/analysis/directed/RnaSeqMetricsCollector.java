@@ -1,9 +1,9 @@
 package picard.analysis.directed;
 
 import htsjdk.samtools.AlignmentBlock;
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.SAMReadGroupRecord;
-import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.SAMSequenceRecord;
 import htsjdk.samtools.metrics.MetricsFile;
 import htsjdk.samtools.util.CoordMath;
@@ -60,7 +60,7 @@ public class RnaSeqMetricsCollector extends SAMRecordMultiLevelCollector<RnaSeqM
     }
 
     @Override
-    protected PerUnitMetricCollector<RnaSeqMetrics, Integer, SAMRecord> makeChildCollector(final String sample, final String library, final String readGroup) {
+    protected PerUnitMetricCollector<RnaSeqMetrics, Integer, ReadRecord> makeChildCollector(final String sample, final String library, final String readGroup) {
         return new PerUnitRnaSeqMetricsCollector(sample, library, readGroup, ribosomalInitialValue);
     }
 
@@ -95,7 +95,7 @@ public class RnaSeqMetricsCollector extends SAMRecordMultiLevelCollector<RnaSeqM
         return ignoredSequenceIndices;
     }
 
-    private class PerUnitRnaSeqMetricsCollector implements PerUnitMetricCollector<RnaSeqMetrics, Integer, SAMRecord> {
+    private class PerUnitRnaSeqMetricsCollector implements PerUnitMetricCollector<RnaSeqMetrics, Integer, ReadRecord> {
 
         final RnaSeqMetrics metrics = new RnaSeqMetrics();
         
@@ -112,7 +112,7 @@ public class RnaSeqMetricsCollector extends SAMRecordMultiLevelCollector<RnaSeqM
             
         }
 
-        public void acceptRecord(SAMRecord rec) {
+        public void acceptRecord(ReadRecord rec) {
             // Filter out some reads, and collect the total number of PF bases
             if (rec.getReadFailsVendorQualityCheckFlag() || rec.isSecondaryOrSupplementary()) return;
 

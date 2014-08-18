@@ -23,7 +23,7 @@
  */
 package picard.sam;
 
-import htsjdk.samtools.SAMRecord;
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.SAMUtils;
 import htsjdk.samtools.util.CollectionUtil;
 import htsjdk.samtools.util.CoordMath;
@@ -52,31 +52,31 @@ public class MostDistantPrimaryAlignmentSelectionStrategy implements PrimaryAlig
     public void pickPrimaryAlignment(final HitsForInsert hitsForInsert) {
         final BestEndAlignmentsAccumulator firstEndBest = new BestEndAlignmentsAccumulator();
         final BestEndAlignmentsAccumulator secondEndBest = new BestEndAlignmentsAccumulator();
-        final CollectionUtil.MultiMap<Integer, SAMRecord> firstEndBySequence =
-                new CollectionUtil.MultiMap<Integer, SAMRecord>();
+        final CollectionUtil.MultiMap<Integer, ReadRecord> firstEndBySequence =
+                new CollectionUtil.MultiMap<Integer, ReadRecord>();
         final BestPairAlignmentsAccumulator pairBest = new BestPairAlignmentsAccumulator();
 
-        for (final SAMRecord rec : hitsForInsert.firstOfPairOrFragment) {
+        for (final ReadRecord rec : hitsForInsert.firstOfPairOrFragment) {
             if (rec.getReadUnmappedFlag()) throw new IllegalStateException();
             firstEndBest.considerBest(rec);
             firstEndBySequence.append(rec.getReferenceIndex(), rec);
         }
 
-        for (final SAMRecord secondEnd: hitsForInsert.secondOfPair) {
+        for (final ReadRecord secondEnd: hitsForInsert.secondOfPair) {
             if (secondEnd.getReadUnmappedFlag()) throw new IllegalStateException();
             secondEndBest.considerBest(secondEnd);
-            final Collection<SAMRecord> firstEnds = firstEndBySequence.get(secondEnd.getReferenceIndex());
+            final Collection<ReadRecord> firstEnds = firstEndBySequence.get(secondEnd.getReferenceIndex());
             if (firstEnds != null) {
-                for (final SAMRecord firstEnd : firstEnds) {
+                for (final ReadRecord firstEnd : firstEnds) {
                     pairBest.considerBest(firstEnd, secondEnd);
                 }
             }
         }
 
-        final SAMRecord bestFirstEnd;
-        final SAMRecord bestSecondEnd;
+        final ReadRecord bestFirstEnd;
+        final ReadRecord bestSecondEnd;
         if (pairBest.hasBest()) {
-            final Map.Entry<SAMRecord, SAMRecord> pairEntry = pickRandomlyFromList(pairBest.bestAlignmentPairs);
+            final Map.Entry<ReadRecord, ReadRecord> pairEntry = pickRandomlyFromList(pairBest.bestAlignmentPairs);
             bestFirstEnd = pairEntry.getKey();
             bestSecondEnd = pairEntry.getValue();
         } else {
@@ -124,7 +124,7 @@ public class MostDistantPrimaryAlignmentSelectionStrategy implements PrimaryAlig
     }
 
     // Uses reference equality, not .equals()
-    private void moveToHead(final List<SAMRecord> list, final SAMRecord rec) {
+    private void moveToHead(final List<ReadRecord> list, final ReadRecord rec) {
         if (list.get(0) == rec) return;
         for (int i = 1; i < list.size(); ++i) {
             if (list.get(i) == rec) {
@@ -138,9 +138,9 @@ public class MostDistantPrimaryAlignmentSelectionStrategy implements PrimaryAlig
 
     private static class BestEndAlignmentsAccumulator {
         public int bestMapq = -1;
-        public List<SAMRecord> bestAlignments = new ArrayList<SAMRecord>();
+        public List<ReadRecord> bestAlignments = new ArrayList<ReadRecord>();
 
-        public void considerBest(final SAMRecord rec) {
+        public void considerBest(final ReadRecord rec) {
             if (bestMapq == -1) {
                 bestMapq = rec.getMappingQuality();
                 bestAlignments.add(rec);
@@ -164,10 +164,10 @@ public class MostDistantPrimaryAlignmentSelectionStrategy implements PrimaryAlig
     private static class BestPairAlignmentsAccumulator {
         public int bestDistance = -1;
         public int bestPairMapq = -1;
-        public List<Map.Entry<SAMRecord, SAMRecord>> bestAlignmentPairs =
-                new ArrayList<Map.Entry<SAMRecord, SAMRecord>>();
+        public List<Map.Entry<ReadRecord, ReadRecord>> bestAlignmentPairs =
+                new ArrayList<Map.Entry<ReadRecord, ReadRecord>>();
 
-        public void considerBest(final SAMRecord firstEnd, final SAMRecord secondEnd) {
+        public void considerBest(final ReadRecord firstEnd, final ReadRecord secondEnd) {
             final int thisPairMapq = SAMUtils.combineMapqs(firstEnd.getMappingQuality(), secondEnd.getMappingQuality());
             final int thisDistance = CoordMath.getLength(Math.min(firstEnd.getAlignmentStart(), secondEnd.getAlignmentStart()),
                     Math.max(firstEnd.getAlignmentEnd(), secondEnd.getAlignmentEnd()));
@@ -175,9 +175,9 @@ public class MostDistantPrimaryAlignmentSelectionStrategy implements PrimaryAlig
                 bestDistance = thisDistance;
                 bestPairMapq = thisPairMapq;
                 bestAlignmentPairs.clear();
-                bestAlignmentPairs.add(new AbstractMap.SimpleEntry<SAMRecord, SAMRecord>(firstEnd, secondEnd));
+                bestAlignmentPairs.add(new AbstractMap.SimpleEntry<ReadRecord, ReadRecord>(firstEnd, secondEnd));
             } else if (thisDistance == bestDistance && thisPairMapq == bestPairMapq) {
-                bestAlignmentPairs.add(new AbstractMap.SimpleEntry<SAMRecord, SAMRecord>(firstEnd, secondEnd));
+                bestAlignmentPairs.add(new AbstractMap.SimpleEntry<ReadRecord, ReadRecord>(firstEnd, secondEnd));
             }
         }
 

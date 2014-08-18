@@ -1,11 +1,11 @@
 package picard.sam;
 
 import htsjdk.samtools.BamFileIoUtils;
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.SAMFileReader;
 import htsjdk.samtools.SAMFileWriter;
 import htsjdk.samtools.SAMFileWriterFactory;
-import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.util.CloserUtil;
 import htsjdk.samtools.util.IOUtil;
 import htsjdk.samtools.util.Log;
@@ -90,7 +90,7 @@ public class GatherBamFiles extends CommandLineProgram {
         for (final File f : inputs) {
             log.info("Gathering " + f.getAbsolutePath());
             final SAMFileReader in = new SAMFileReader(f);
-            for (final SAMRecord rec : in) out.addAlignment(rec);
+            for (final ReadRecord rec : in) out.addAlignment(rec);
             CloserUtil.close(in);
         }
 

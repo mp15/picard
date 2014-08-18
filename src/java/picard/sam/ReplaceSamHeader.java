@@ -24,11 +24,11 @@
 package picard.sam;
 
 import htsjdk.samtools.BamFileIoUtils;
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.SAMFileReader;
 import htsjdk.samtools.SAMFileWriter;
 import htsjdk.samtools.SAMFileWriterFactory;
-import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.ValidationStringency;
 import htsjdk.samtools.util.IOUtil;
 import htsjdk.samtools.util.Log;
@@ -105,7 +105,7 @@ public class ReplaceSamHeader extends CommandLineProgram {
         final SAMFileWriter writer = new SAMFileWriterFactory().makeSAMOrBAMWriter(replacementHeader, true, OUTPUT);
 
         final ProgressLogger progress = new ProgressLogger(Log.getInstance(ReplaceSamHeader.class));
-        for (final SAMRecord rec : recordReader) {
+        for (final ReadRecord rec : recordReader) {
             rec.setHeader(replacementHeader);
             writer.addAlignment(rec);
             progress.record(rec);

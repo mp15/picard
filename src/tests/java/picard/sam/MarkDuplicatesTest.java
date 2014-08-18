@@ -23,10 +23,10 @@
  */
 package picard.sam;
 
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.SAMFileReader;
 import htsjdk.samtools.SAMProgramRecord;
-import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.SAMTag;
 import htsjdk.samtools.util.IOUtil;
 import htsjdk.samtools.util.TestUtil;
@@ -81,7 +81,7 @@ public class MarkDuplicatesTest {
             final SAMFileReader reader = new SAMFileReader(outputSam);
 
             final Map<String, String> pgIdForReadName = new HashMap<String, String>();
-            for (final SAMRecord rec : reader) {
+            for (final ReadRecord rec : reader) {
                 final String existingPgId = pgIdForReadName.get(rec.getReadName());
                 final String thisPgId = rec.getStringAttribute(SAMTag.PG.name());
                 if (existingPgId != null) {

@@ -1,7 +1,7 @@
 package picard.analysis.directed;
 
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.SAMReadGroupRecord;
-import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.SamPairUtil;
 import htsjdk.samtools.metrics.MetricsFile;
 import htsjdk.samtools.reference.ReferenceSequence;
@@ -44,7 +44,7 @@ public class InsertSizeMetricsCollector extends MultiLevelCollector<InsertSizeMe
     // We will pass insertSize and PairOrientation with the DefaultPerRecordCollectorArgs passed to the record collectors
     // This method is called once Per samRecord
     @Override
-    protected InsertSizeCollectorArgs makeArg(SAMRecord samRecord, ReferenceSequence refSeq) {
+    protected InsertSizeCollectorArgs makeArg(ReadRecord samRecord, ReferenceSequence refSeq) {
         final int insertSize = Math.abs(samRecord.getInferredInsertSize());
         final SamPairUtil.PairOrientation orientation = SamPairUtil.getPairOrientation(samRecord);
 
@@ -58,7 +58,7 @@ public class InsertSizeMetricsCollector extends MultiLevelCollector<InsertSizeMe
     }
 
     @Override
-    public void acceptRecord(final SAMRecord record, final ReferenceSequence refSeq) {
+    public void acceptRecord(final ReadRecord record, final ReferenceSequence refSeq) {
         if (!record.getReadPairedFlag() ||
                 record.getReadUnmappedFlag() ||
                 record.getMateUnmappedFlag() ||

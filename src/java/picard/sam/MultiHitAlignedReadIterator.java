@@ -26,7 +26,7 @@ package picard.sam;
 import htsjdk.samtools.Cigar;
 import htsjdk.samtools.CigarElement;
 import htsjdk.samtools.CigarOperator;
-import htsjdk.samtools.SAMRecord;
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.SAMRecordQueryNameComparator;
 import htsjdk.samtools.SAMTag;
 import htsjdk.samtools.SAMUtils;
@@ -55,7 +55,7 @@ import java.util.NoSuchElementException;
  * @throws IllegalStateException if the input is not queryname-sorted.
  */
 class MultiHitAlignedReadIterator implements CloseableIterator<HitsForInsert> {
-    private final PeekableIterator<SAMRecord> peekIterator;
+    private final PeekableIterator<ReadRecord> peekIterator;
     private final SAMRecordQueryNameComparator queryNameComparator = new SAMRecordQueryNameComparator();
     private final PrimaryAlignmentSelectionStrategy primaryAlignmentSelectionStrategy;
 
@@ -67,16 +67,16 @@ class MultiHitAlignedReadIterator implements CloseableIterator<HitsForInsert> {
      * @param primaryAlignmentSelectionStrategy Algorithm for selecting primary alignment when it is not clear from
      *                                          the input what should be primary.
      */
-    MultiHitAlignedReadIterator(final CloseableIterator<SAMRecord> querynameOrderIterator,
+    MultiHitAlignedReadIterator(final CloseableIterator<ReadRecord> querynameOrderIterator,
                                 final PrimaryAlignmentSelectionStrategy primaryAlignmentSelectionStrategy) {
         this.primaryAlignmentSelectionStrategy = primaryAlignmentSelectionStrategy;
-        peekIterator = new PeekableIterator<SAMRecord>(new FilteringIterator(querynameOrderIterator,
+        peekIterator = new PeekableIterator<ReadRecord>(new FilteringIterator(querynameOrderIterator,
                 new SamRecordFilter() {
                     // Filter unmapped reads.
-                    public boolean filterOut(final SAMRecord record) {
+                    public boolean filterOut(final ReadRecord record) {
                         return record.getReadUnmappedFlag() || SAMUtils.cigarMapsNoBasesToRef(record.getCigar());
                     }
-                    public boolean filterOut(final SAMRecord first, final SAMRecord second) {
+                    public boolean filterOut(final ReadRecord first, final ReadRecord second) {
                         return ((first.getReadUnmappedFlag() || SAMUtils.cigarMapsNoBasesToRef(first.getCigar()))
                                 && (second.getReadUnmappedFlag() || SAMUtils.cigarMapsNoBasesToRef(second.getCigar())));
                     }
@@ -121,7 +121,7 @@ class MultiHitAlignedReadIterator implements CloseableIterator<HitsForInsert> {
 
         // Accumulate the alignments matching readName.
         do {
-            final SAMRecord rec = peekIterator.next();
+            final ReadRecord rec = peekIterator.next();
             replaceHardWithSoftClips(rec);
             // It is critical to do this here, because SamAlignmentMerger uses this exception to determine
             // if the aligned input needs to be sorted.
@@ -173,7 +173,7 @@ class MultiHitAlignedReadIterator implements CloseableIterator<HitsForInsert> {
     }
 
     /** Replaces hard clips with soft clips and fills in bases and qualities with dummy values as needed. */
-    private void replaceHardWithSoftClips(final SAMRecord rec) {
+    private void replaceHardWithSoftClips(final ReadRecord rec) {
         if (rec.getReadUnmappedFlag()) return;
         if (rec.getCigar().isEmpty()) return;
 

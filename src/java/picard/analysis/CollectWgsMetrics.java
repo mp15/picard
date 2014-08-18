@@ -1,8 +1,8 @@
 package picard.analysis;
 
 import htsjdk.samtools.AlignmentBlock;
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.SAMFileReader;
-import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.filter.SamRecordFilter;
 import htsjdk.samtools.filter.SecondaryAlignmentFilter;
 import htsjdk.samtools.metrics.MetricBase;
@@ -243,7 +243,7 @@ abstract class CountingFilter implements SamRecordFilter {
     /** Gets the number of bases that have been filtered out thus far. */
     public long getFilteredBases() { return this.filteredBases; }
 
-    @Override public final boolean filterOut(final SAMRecord record) {
+    @Override public final boolean filterOut(final ReadRecord record) {
         final boolean filteredOut = reallyFilterOut(record);
         if (filteredOut) {
             ++filteredRecords;
@@ -254,27 +254,27 @@ abstract class CountingFilter implements SamRecordFilter {
         return filteredOut;
     }
 
-    abstract public boolean reallyFilterOut(final SAMRecord record);
+    abstract public boolean reallyFilterOut(final ReadRecord record);
 
-    @Override public boolean filterOut(final SAMRecord first, final SAMRecord second) {
+    @Override public boolean filterOut(final ReadRecord first, final ReadRecord second) {
         throw new UnsupportedOperationException();
     }
 }
 
 /** Counting filter that discards reads that have been marked as duplicates. */
 class CountingDuplicateFilter extends CountingFilter {
-    @Override public boolean reallyFilterOut(final SAMRecord record) { return record.getDuplicateReadFlag(); }
+    @Override public boolean reallyFilterOut(final ReadRecord record) { return record.getDuplicateReadFlag(); }
 }
 
 /** Counting filter that discards reads below a configurable mapping quality threshold. */
 class CountingMapQFilter extends CountingFilter {
     private final int minMapq;
     CountingMapQFilter(final int minMapq) { this.minMapq = minMapq; }
-    @Override public boolean reallyFilterOut(final SAMRecord record) { return record.getMappingQuality() < minMapq; }
+    @Override public boolean reallyFilterOut(final ReadRecord record) { return record.getMappingQuality() < minMapq; }
 }
 
 /** Counting filter that discards reads that are unpaired in sequencing and paired reads who's mates are not mapped. */
 class CountingPairedFilter extends CountingFilter {
-    @Override public boolean reallyFilterOut(final SAMRecord record) { return !record.getReadPairedFlag() || record.getMateUnmappedFlag(); }
+    @Override public boolean reallyFilterOut(final ReadRecord record) { return !record.getReadPairedFlag() || record.getMateUnmappedFlag(); }
 }
 

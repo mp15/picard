@@ -1,9 +1,9 @@
 package picard.analysis;
 
 
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.SAMFileReader;
 import htsjdk.samtools.SAMReadGroupRecord;
-import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.metrics.MetricsFile;
 import htsjdk.samtools.reference.ReferenceSequence;
 import org.testng.Assert;
@@ -36,10 +36,10 @@ public class MultiLevelCollectorTest {
     }
 
     class TestArg {
-        public final SAMRecord samRecord;
+        public final ReadRecord samRecord;
         public final ReferenceSequence refSeq;
 
-        public TestArg(final SAMRecord samRecord, final ReferenceSequence refSeq) {
+        public TestArg(final ReadRecord samRecord, final ReferenceSequence refSeq) {
             this.samRecord = samRecord;
             this.refSeq    = refSeq;
         }
@@ -76,7 +76,7 @@ public class MultiLevelCollectorTest {
         }
 
         @Override
-        protected TestArg makeArg(final SAMRecord samRec, final ReferenceSequence refSeq) {
+        protected TestArg makeArg(final ReadRecord samRec, final ReferenceSequence refSeq) {
             return new TestArg(samRec, refSeq);
         }
 
@@ -167,7 +167,7 @@ public class MultiLevelCollectorTest {
         final SAMFileReader in = new SAMFileReader(TESTFILE);
         final RecordCountMultiLevelCollector collector = new RecordCountMultiLevelCollector(accumulationLevels, in.getFileHeader().getReadGroups());
 
-        for (final SAMRecord rec : in) {
+        for (final ReadRecord rec : in) {
             collector.acceptRecord(rec, null);
         }
 

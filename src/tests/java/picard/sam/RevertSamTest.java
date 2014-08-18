@@ -23,10 +23,10 @@
  */
 package picard.sam;
 
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.SAMFileReader;
 import htsjdk.samtools.SAMReadGroupRecord;
-import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.SAMRecordIterator;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
@@ -103,7 +103,7 @@ public class RevertSamTest {
         }
         SAMRecordIterator it = reader.iterator();
         while (it.hasNext()) {
-            SAMRecord rec = it.next();
+            ReadRecord rec = it.next();
 
             if (removeDuplicates) {
                 Assert.assertFalse(rec.getDuplicateReadFlag(),
@@ -124,7 +124,7 @@ public class RevertSamTest {
                 Assert.assertNotSame(rec.getBaseQualityString(), revertedQualities);
             }
 
-            for (SAMRecord.SAMTagAndValue attr : rec.getAttributes()) {
+            for (ReadRecord.SAMTagAndValue attr : rec.getAttributes()) {
                 if (removeAlignmentInfo || (!attr.tag.equals("PG") && !attr.tag.equals("NM")
                     && !attr.tag.equals("MQ"))) {
                     Assert.assertFalse(reverter.ATTRIBUTE_TO_CLEAR.contains(attr.tag),

@@ -4,11 +4,11 @@ import htsjdk.samtools.BAMRecordCodec;
 import htsjdk.samtools.CigarElement;
 import htsjdk.samtools.CigarOperator;
 import htsjdk.samtools.MergingSamRecordIterator;
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.SAMFileHeader.SortOrder;
 import htsjdk.samtools.SAMFileReader;
 import htsjdk.samtools.SAMProgramRecord;
-import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.SAMRecordQueryNameComparator;
 import htsjdk.samtools.SamFileHeaderMerger;
 import htsjdk.samtools.SamPairUtil;
@@ -176,9 +176,9 @@ public class SamAlignmentMerger extends AbstractAlignmentMerger {
     /**
      * Reads the aligned SAM records into a SortingCollection and returns an iterator over that collection
      */
-    protected CloseableIterator<SAMRecord> getQuerynameSortedAlignedRecords() {
+    protected CloseableIterator<ReadRecord> getQuerynameSortedAlignedRecords() {
 
-        final CloseableIterator<SAMRecord> mergingIterator;
+        final CloseableIterator<ReadRecord> mergingIterator;
         final SAMFileHeader header;
 
         // When the alignment records, including both ends of a pair, are in SAM files
@@ -210,7 +210,7 @@ public class SamAlignmentMerger extends AbstractAlignmentMerger {
         }
 
 
-        final SortingCollection<SAMRecord> alignmentSorter = SortingCollection.newInstance(SAMRecord.class,
+        final SortingCollection<ReadRecord> alignmentSorter = SortingCollection.newInstance(ReadRecord.class,
                     new BAMRecordCodec(header), new SAMRecordQueryNameComparator(), MAX_RECORDS_IN_RAM);
 
         int count = 0;
@@ -224,7 +224,7 @@ public class SamAlignmentMerger extends AbstractAlignmentMerger {
         log.info("Finished reading " + count + " total records from alignment SAM/BAM.");
 
         mergingIterator.close();
-        return new DelegatingIterator<SAMRecord>(alignmentSorter.iterator()) {
+        return new DelegatingIterator<ReadRecord>(alignmentSorter.iterator()) {
             @Override
             public void close() {
                 super.close();
@@ -233,11 +233,11 @@ public class SamAlignmentMerger extends AbstractAlignmentMerger {
         };
     }
 
-    private class SuffixTrimingSamRecordIterator implements CloseableIterator<SAMRecord> {
-        private final CloseableIterator<SAMRecord> underlyingIterator;
+    private class SuffixTrimingSamRecordIterator implements CloseableIterator<ReadRecord> {
+        private final CloseableIterator<ReadRecord> underlyingIterator;
         private final String suffixToTrim;
 
-        private SuffixTrimingSamRecordIterator(final CloseableIterator<SAMRecord> underlyingIterator, final String suffixToTrim) {
+        private SuffixTrimingSamRecordIterator(final CloseableIterator<ReadRecord> underlyingIterator, final String suffixToTrim) {
             this.underlyingIterator = underlyingIterator;
             this.suffixToTrim = suffixToTrim;
         }
@@ -253,8 +253,8 @@ public class SamAlignmentMerger extends AbstractAlignmentMerger {
         }
 
         @Override
-        public SAMRecord next() {
-            final SAMRecord rec = underlyingIterator.next();
+        public ReadRecord next() {
+            final ReadRecord rec = underlyingIterator.next();
             final String readName = rec.getReadName();
             if (readName.endsWith(suffixToTrim)) {
                 rec.setReadName(readName.substring(0, readName.length() - suffixToTrim.length()));
@@ -268,10 +268,10 @@ public class SamAlignmentMerger extends AbstractAlignmentMerger {
         }
     }
 
-    private class SeparateEndAlignmentIterator implements CloseableIterator<SAMRecord> {
+    private class SeparateEndAlignmentIterator implements CloseableIterator<ReadRecord> {
 
-        private final PeekableIterator<SAMRecord> read1Iterator;
-        private final PeekableIterator<SAMRecord> read2Iterator;
+        private final PeekableIterator<ReadRecord> read1Iterator;
+        private final PeekableIterator<ReadRecord> read2Iterator;
         private final SAMFileHeader header;
 
         public SeparateEndAlignmentIterator(final List<File> read1Alignments, final List<File> read2Alignments) {
@@ -290,9 +290,9 @@ public class SamAlignmentMerger extends AbstractAlignmentMerger {
             }
 
             final SamFileHeaderMerger headerMerger = new SamFileHeaderMerger(SAMFileHeader.SortOrder.coordinate, headers, false);
-            read1Iterator = new PeekableIterator<SAMRecord>(
+            read1Iterator = new PeekableIterator<ReadRecord>(
                     new SuffixTrimingSamRecordIterator(new MergingSamRecordIterator(headerMerger, read1, true), "/1"));
-            read2Iterator = new PeekableIterator<SAMRecord>(
+            read2Iterator = new PeekableIterator<ReadRecord>(
                     new SuffixTrimingSamRecordIterator(new MergingSamRecordIterator(headerMerger, read2, true), "/2"));
 
             header = headerMerger.getMergedHeader();
@@ -307,7 +307,7 @@ public class SamAlignmentMerger extends AbstractAlignmentMerger {
             return read1Iterator.hasNext() || read2Iterator.hasNext();
         }
 
-        public SAMRecord next() {
+        public ReadRecord next() {
             if (read1Iterator.hasNext()) {
                 if (read2Iterator.hasNext()) {
                     return (read1Iterator.peek().getReadName().compareTo(read2Iterator.peek().getReadName()) <= 0)
@@ -329,7 +329,7 @@ public class SamAlignmentMerger extends AbstractAlignmentMerger {
 
         public SAMFileHeader getHeader() { return this.header; }
 
-        private SAMRecord setPairFlags(final SAMRecord sam, final boolean firstOfPair) {
+        private ReadRecord setPairFlags(final ReadRecord sam, final boolean firstOfPair) {
             sam.setReadPairedFlag(true);
             sam.setFirstOfPairFlag(firstOfPair);
             sam.setSecondOfPairFlag(!firstOfPair);
@@ -341,7 +341,7 @@ public class SamAlignmentMerger extends AbstractAlignmentMerger {
      * For now, we only ignore those alignments that have more than <code>maxGaps</code> insertions
      * or deletions.
      */
-    protected boolean ignoreAlignment(final SAMRecord sam) {
+    protected boolean ignoreAlignment(final ReadRecord sam) {
         if (maxGaps == -1) return false;
         int gaps = 0;
         for (final CigarElement el : sam.getCigar().getCigarElements()) {

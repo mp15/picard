@@ -23,11 +23,11 @@
  */
 package picard.analysis;
 
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.SAMFileWriter;
 import htsjdk.samtools.SAMFileWriterFactory;
 import htsjdk.samtools.SAMReadGroupRecord;
-import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.SAMRecordSetBuilder;
 import htsjdk.samtools.metrics.MetricsFile;
 import htsjdk.samtools.util.Interval;
@@ -64,7 +64,7 @@ public class CollectRnaSeqMetricsTest {
 
         final File samFile = File.createTempFile("tmp.collectRnaSeqMetrics.", ".sam");
         final SAMFileWriter samWriter = new SAMFileWriterFactory().makeSAMWriter(builder.getHeader(), false, samFile);
-        for (final SAMRecord rec: builder.getRecords()) samWriter.addAlignment(rec);
+        for (final ReadRecord rec: builder.getRecords()) samWriter.addAlignment(rec);
         samWriter.close();
 
         // Create an interval list with one ribosomal interval.
@@ -135,7 +135,7 @@ public class CollectRnaSeqMetricsTest {
 
         final File samFile = File.createTempFile("tmp.collectRnaSeqMetrics.", ".sam");
         final SAMFileWriter samWriter = new SAMFileWriterFactory().makeSAMWriter(builder.getHeader(), false, samFile);
-        for (final SAMRecord rec: builder.getRecords()) samWriter.addAlignment(rec);
+        for (final ReadRecord rec: builder.getRecords()) samWriter.addAlignment(rec);
         samWriter.close();
 
         // Create an interval list with one ribosomal interval.

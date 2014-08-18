@@ -25,11 +25,11 @@
 package picard.illumina;
 
 import htsjdk.samtools.BAMRecordCodec;
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.SAMFileWriter;
 import htsjdk.samtools.SAMFileWriterFactory;
 import htsjdk.samtools.SAMReadGroupRecord;
-import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.SAMRecordQueryNameComparator;
 import htsjdk.samtools.util.CollectionUtil;
 import htsjdk.samtools.util.IOUtil;
@@ -458,7 +458,7 @@ public class IlluminaBasecallsToSam extends CommandLineProgram {
 
         @Override
         public void write(final SAMRecordsForCluster records) {
-            for (final SAMRecord rec : records.records) {
+            for (final ReadRecord rec : records.records) {
                 writer.addAlignment(rec);
             }
         }
@@ -470,10 +470,10 @@ public class IlluminaBasecallsToSam extends CommandLineProgram {
     }
 
     static class SAMRecordsForCluster {
-        final SAMRecord[] records;
+        final ReadRecord[] records;
 
         SAMRecordsForCluster(final int numRecords) {
-            records = new SAMRecord[numRecords];
+            records = new ReadRecord[numRecords];
         }
     }
 
@@ -514,14 +514,14 @@ public class IlluminaBasecallsToSam extends CommandLineProgram {
                 throw new IllegalStateException(String.format("Expected number of clusters %d != actual %d",
                         numRecords, val.records.length));
             }
-            for (final SAMRecord rec : val.records) {
+            for (final ReadRecord rec : val.records) {
                 bamCodec.encode(rec);
             }
         }
 
         @Override
         public SAMRecordsForCluster decode() {
-            final SAMRecord zerothRecord = bamCodec.decode();
+            final ReadRecord zerothRecord = bamCodec.decode();
             if (zerothRecord == null) return null;
             final SAMRecordsForCluster ret = new SAMRecordsForCluster(numRecords);
             ret.records[0] = zerothRecord;

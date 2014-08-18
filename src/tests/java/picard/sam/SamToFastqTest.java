@@ -23,10 +23,10 @@
  */
 package picard.sam;
 
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.SAMException;
 import htsjdk.samtools.SAMFileReader;
 import htsjdk.samtools.SAMFormatException;
-import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.fastq.FastqReader;
 import htsjdk.samtools.fastq.FastqRecord;
 import htsjdk.samtools.util.IOUtil;
@@ -366,7 +366,7 @@ public class SamToFastqTest {
         final SAMFileReader reader = new SAMFileReader(IOUtil.openFileForReading(samFile));
 
         final Map<String,MatePair> map = new LinkedHashMap<String,MatePair>();
-        for (final SAMRecord record : reader ) {
+        for (final ReadRecord record : reader ) {
             MatePair mpair = map.get(record.getReadName());
             if (mpair == null) {
                  mpair = new MatePair();
@@ -385,7 +385,7 @@ public class SamToFastqTest {
         final Map<String, Map<String, MatePair>> map = new LinkedHashMap<String, Map<String,MatePair>>();
 
         Map<String,MatePair> curFileMap;
-        for (final SAMRecord record : reader ) {
+        for (final ReadRecord record : reader ) {
             String platformUnit = record.getReadGroup().getPlatformUnit();
             curFileMap = map.get(platformUnit);
             if(curFileMap == null)
@@ -406,9 +406,9 @@ public class SamToFastqTest {
     }
 
     class MatePair {
-        SAMRecord mate1 ;
-        SAMRecord mate2 ;
-        void add(final SAMRecord record) {
+        ReadRecord mate1 ;
+        ReadRecord mate2 ;
+        void add(final ReadRecord record) {
             if (!record.getReadPairedFlag()) throw new PicardException("Record "+record.getReadName()+" is not paired");
             if (record.getFirstOfPairFlag()) { 
                 if (mate1 != null) throw new PicardException("Mate 1 already set for record: "+record.getReadName());

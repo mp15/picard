@@ -23,11 +23,11 @@
  */
 package picard.sam;
 
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.SAMFileReader;
 import htsjdk.samtools.SAMFileWriter;
 import htsjdk.samtools.SAMFileWriterFactory;
-import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.SAMRecordIterator;
 import htsjdk.samtools.SAMSequenceDictionary;
 import htsjdk.samtools.SAMSequenceRecord;
@@ -138,7 +138,7 @@ public class ReorderSam extends CommandLineProgram {
      * ordering map newOrder.  Read is provided in case an error occurs, so that an informative message
      * can be made.
      */
-    private int newOrderIndex(SAMRecord read, int oldIndex, Map<Integer, Integer> newOrder) {
+    private int newOrderIndex(ReadRecord read, int oldIndex, Map<Integer, Integer> newOrder) {
         if ( oldIndex == -1 )
             return -1; // unmapped read
         else {
@@ -162,7 +162,7 @@ public class ReorderSam extends CommandLineProgram {
 
         while ( it.hasNext() ) {
             counter++;
-            final SAMRecord read = it.next();
+            final ReadRecord read = it.next();
             final int oldRefIndex = read.getReferenceIndex();
             final int oldMateIndex = read.getMateReferenceIndex();
             final int newRefIndex = newOrderIndex(read, oldRefIndex, newOrder);

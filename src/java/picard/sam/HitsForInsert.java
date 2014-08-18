@@ -23,7 +23,7 @@
  */
 package picard.sam;
 
-import htsjdk.samtools.SAMRecord;
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.SAMTag;
 
 import java.util.ArrayList;
@@ -56,11 +56,11 @@ class HitsForInsert {
 
 
     // These are package-visible to make life easier for the PrimaryAlignmentSelectionStrategies.
-    final List<SAMRecord> firstOfPairOrFragment = new ArrayList<SAMRecord>();
-    final List<SAMRecord> secondOfPair = new ArrayList<SAMRecord>();
+    final List<ReadRecord> firstOfPairOrFragment = new ArrayList<ReadRecord>();
+    final List<ReadRecord> secondOfPair = new ArrayList<ReadRecord>();
 
-    private final List<SAMRecord> supplementalFirstOfPairOrFragment = new ArrayList<SAMRecord>();
-    private final List<SAMRecord> supplementalSecondOfPair = new ArrayList<SAMRecord>();
+    private final List<ReadRecord> supplementalFirstOfPairOrFragment = new ArrayList<ReadRecord>();
+    private final List<ReadRecord> supplementalSecondOfPair = new ArrayList<ReadRecord>();
 
     /**
      * @throws if numHits() == 0
@@ -76,11 +76,11 @@ class HitsForInsert {
         return getRepresentativeRead().getReadPairedFlag();
     }
 
-    public SAMRecord getRepresentativeRead() {
-        for (final SAMRecord rec : firstOfPairOrFragment) {
+    public ReadRecord getRepresentativeRead() {
+        for (final ReadRecord rec : firstOfPairOrFragment) {
             if (rec != null) return rec;
         }
-        for (final SAMRecord rec : secondOfPair) {
+        for (final ReadRecord rec : secondOfPair) {
             if (rec != null) return rec;
         }
         throw new IllegalStateException("Should not be called if numHits == 0");
@@ -101,7 +101,7 @@ class HitsForInsert {
     /**
      * @return Returns the ith hit for the first end, or null if the first end is not aligned.
      */
-    public SAMRecord getFirstOfPair(final int i) {
+    public ReadRecord getFirstOfPair(final int i) {
         if (i >= firstOfPairOrFragment.size()) {
             return null;
         } else {
@@ -109,19 +109,19 @@ class HitsForInsert {
         }
     }
 
-    public void addFirstOfPairOrFragment(final SAMRecord rec) {
+    public void addFirstOfPairOrFragment(final ReadRecord rec) {
         firstOfPairOrFragment.add(rec);
     }
 
-    public void addSecondOfPair(final SAMRecord rec) {
+    public void addSecondOfPair(final ReadRecord rec) {
         secondOfPair.add(rec);
     }
 
-    public void addSupplementalFirstOfPairOrFragment(final SAMRecord rec) {
+    public void addSupplementalFirstOfPairOrFragment(final ReadRecord rec) {
         supplementalFirstOfPairOrFragment.add(rec);
     }
 
-    public void addSupplementalSecondOfPair(final SAMRecord rec) {
+    public void addSupplementalSecondOfPair(final ReadRecord rec) {
         supplementalSecondOfPair.add(rec);
     }
 
@@ -129,8 +129,8 @@ class HitsForInsert {
      * @return The ith hit for a un-paired read.  Never returns null.
      * Do not call if paired read.
      */
-    public SAMRecord getFragment(final int i) {
-        final SAMRecord samRecord = firstOfPairOrFragment.get(i);
+    public ReadRecord getFragment(final int i) {
+        final ReadRecord samRecord = firstOfPairOrFragment.get(i);
         if (samRecord.getReadPairedFlag()) throw new UnsupportedOperationException("getFragment called for paired read");
         return samRecord;
     }
@@ -138,7 +138,7 @@ class HitsForInsert {
     /**
      * @return Returns the ith hit for the second end, or null if the second end is not aligned.
      */
-    public SAMRecord getSecondOfPair(final int i) {
+    public ReadRecord getSecondOfPair(final int i) {
         if (i >= secondOfPair.size()) {
             return null;
         } else {
@@ -206,8 +206,8 @@ class HitsForInsert {
         // Now renumber any correlated alignments, and remove hit index if no correlated read.
         int hi = 0;
         for (int i = 0; i < numHits(); ++i) {
-            final SAMRecord first = getFirstOfPair(i);
-            final SAMRecord second = getSecondOfPair(i);
+            final ReadRecord first = getFirstOfPair(i);
+            final ReadRecord second = getSecondOfPair(i);
             if (first != null && second != null) {
                 first.setAttribute(SAMTag.HI.name(), i);
                 second.setAttribute(SAMTag.HI.name(), i);
@@ -227,7 +227,7 @@ class HitsForInsert {
      * @param records
      * @return NONE, ONE or MORE_THAN_ONE.
      */
-    private NumPrimaryAlignmentState tallyPrimaryAlignments(final List<SAMRecord> records) {
+    private NumPrimaryAlignmentState tallyPrimaryAlignments(final List<ReadRecord> records) {
         boolean seenPrimary = false;
         for (int i = 0; i < records.size(); ++i) {
             if (records.get(i) != null && !records.get(i).isSecondaryOrSupplementary()) {
@@ -244,7 +244,7 @@ class HitsForInsert {
         else return tallyPrimaryAlignments(secondOfPair);
     }
 
-    int findPrimaryAlignment(final List<SAMRecord> records) {
+    int findPrimaryAlignment(final List<ReadRecord> records) {
         int indexOfPrimaryAlignment = -1;
         for (int i = 0; i < records.size(); ++i) {
             if (records.get(i) != null && !records.get(i).isSecondaryOrSupplementary()) {
@@ -258,8 +258,8 @@ class HitsForInsert {
     }
 
     // null HI tag sorts after any non-null.
-    private static class HitIndexComparator implements Comparator<SAMRecord> {
-        public int compare(final SAMRecord rec1, final SAMRecord rec2) {
+    private static class HitIndexComparator implements Comparator<ReadRecord> {
+        public int compare(final ReadRecord rec1, final ReadRecord rec2) {
             final Integer hi1 = rec1.getIntegerAttribute(SAMTag.HI.name());
             final Integer hi2 = rec2.getIntegerAttribute(SAMTag.HI.name());
             if (hi1 == null) {
@@ -273,11 +273,11 @@ class HitsForInsert {
         }
     }
 
-    List<SAMRecord> getSupplementalFirstOfPairOrFragment() {
+    List<ReadRecord> getSupplementalFirstOfPairOrFragment() {
         return supplementalFirstOfPairOrFragment;
     }
 
-    List<SAMRecord> getSupplementalSecondOfPair() {
+    List<ReadRecord> getSupplementalSecondOfPair() {
         return supplementalSecondOfPair;
     }
 }

@@ -1,7 +1,7 @@
 package picard.sam.testers;
 
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.SAMFileReader;
-import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.SAMRecordIterator;
 import htsjdk.samtools.SAMUtils;
 import htsjdk.samtools.SAMValidationError;
@@ -40,7 +40,7 @@ public class CleanSamTester extends SamFileTester {
             samReader.setValidationStringency(ValidationStringency.LENIENT);
             final SAMRecordIterator iterator = samReader.iterator();
             while (iterator.hasNext()) {
-                final SAMRecord rec = iterator.next();
+                final ReadRecord rec = iterator.next();
                 Assert.assertEquals(rec.getCigarString(), expectedCigar);
                 if (SAMUtils.hasMateCigar(rec)) {
                     Assert.assertEquals(SAMUtils.getMateCigarString(rec), expectedCigar);

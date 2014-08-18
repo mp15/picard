@@ -1,8 +1,8 @@
 package picard.analysis;
 
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.SAMReadGroupRecord;
-import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.metrics.MetricsFile;
 import htsjdk.samtools.reference.ReferenceSequence;
 import htsjdk.samtools.util.IOUtil;
@@ -50,7 +50,7 @@ public class CollectBaseDistributionByCycle extends SinglePassSamProgram {
     }
 
     @Override
-    protected void acceptRead(final SAMRecord rec, final ReferenceSequence ref) {
+    protected void acceptRead(final ReadRecord rec, final ReferenceSequence ref) {
         if ((PF_READS_ONLY) && (rec.getReadFailsVendorQualityCheckFlag())) {
             return;
         }
@@ -108,7 +108,7 @@ public class CollectBaseDistributionByCycle extends SinglePassSamProgram {
             return 4;
         }
 
-        void addRecord(final SAMRecord rec) {
+        void addRecord(final ReadRecord rec) {
             final byte[] bases = rec.getReadBases();
             if (bases == null) {
                 return;

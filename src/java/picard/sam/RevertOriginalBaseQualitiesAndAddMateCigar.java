@@ -1,11 +1,11 @@
 package picard.sam;
 
 import htsjdk.samtools.BAMRecordCodec;
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.SAMFileReader;
 import htsjdk.samtools.SAMFileWriter;
 import htsjdk.samtools.SAMFileWriterFactory;
-import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.SAMRecordQueryNameComparator;
 import htsjdk.samtools.SAMUtils;
 import htsjdk.samtools.SamPairUtil;
@@ -91,11 +91,11 @@ public class RevertOriginalBaseQualitiesAndAddMateCigar extends CommandLineProgr
         final SAMFileWriter out = new SAMFileWriterFactory().makeSAMOrBAMWriter(outHeader, false, OUTPUT);
 
         // Iterate over the records, revert original base qualities, and push them into a SortingCollection by queryname
-        final SortingCollection<SAMRecord> sorter = SortingCollection.newInstance(SAMRecord.class, new BAMRecordCodec(outHeader),
+        final SortingCollection<ReadRecord> sorter = SortingCollection.newInstance(ReadRecord.class, new BAMRecordCodec(outHeader),
                 new SAMRecordQueryNameComparator(), MAX_RECORDS_IN_RAM);
         final ProgressLogger revertingProgress = new ProgressLogger(log, 1000000, " reverted OQs");
         int numOriginalQualitiesRestored = 0;
-        for (final SAMRecord record : in) {
+        for (final ReadRecord record : in) {
             // Clean up reads that map off the end of the reference
             AbstractAlignmentMerger.createNewCigarsIfMapsOffEndOfReference(record);
 
@@ -117,21 +117,21 @@ public class RevertOriginalBaseQualitiesAndAddMateCigar extends CommandLineProgr
          * 1. Set mate cigar string on primary/non-supplemental records
          * 2. push record into SAMFileWriter to the output
          */
-        final PeekableIterator<SAMRecord> sorterIterator = new PeekableIterator<SAMRecord>(sorter.iterator());
+        final PeekableIterator<ReadRecord> sorterIterator = new PeekableIterator<ReadRecord>(sorter.iterator());
         final ProgressLogger sorterProgress = new ProgressLogger(log, 1000000, " mate cigars added");
         int numMateCigarsAdded = 0;
         while (sorterIterator.hasNext()) {
-            final List<SAMRecord> records = new LinkedList<SAMRecord>();
+            final List<ReadRecord> records = new LinkedList<ReadRecord>();
 
 
             /**
              * Get all records with the same name, and then identify the canonical first and second end to which we
              * want to add mate cigars.
              */
-            SAMRecord firstRecord = null, secondRecord = null;
-            final SAMRecord first = sorterIterator.peek(); // peek so we consider it in the following loop
+            ReadRecord firstRecord = null, secondRecord = null;
+            final ReadRecord first = sorterIterator.peek(); // peek so we consider it in the following loop
             while (sorterIterator.hasNext() && sorterIterator.peek().getReadName().equals(first.getReadName())) {
-                final SAMRecord record = sorterIterator.next();
+                final ReadRecord record = sorterIterator.next();
                 // We must make sure that we find only one "primary" alignments for each end
                 if (record.getReadPairedFlag() && !record.isSecondaryOrSupplementary()) {
                     if (record.getFirstOfPairFlag()) {
@@ -158,7 +158,7 @@ public class RevertOriginalBaseQualitiesAndAddMateCigar extends CommandLineProgr
             }
 
             // Add it to the output file
-            for (final SAMRecord record : records) {
+            for (final ReadRecord record : records) {
                 sorterProgress.record(record);
                 out.addAlignment(record);
             }
@@ -201,12 +201,12 @@ public class RevertOriginalBaseQualitiesAndAddMateCigar extends CommandLineProgr
      */
     public static CanSkipSamFile canSkipSAMFile(final File inputFile, final int maxRecordsToExamine, boolean revertOriginalBaseQualities)  {
         final SAMFileReader in = new SAMFileReader(inputFile, true);
-        final Iterator<SAMRecord> iterator = in.iterator();
+        final Iterator<ReadRecord> iterator = in.iterator();
         int numRecordsExamined = 0;
         CanSkipSamFile returnType = CanSkipSamFile.FOUND_NO_EVIDENCE;
 
         while (iterator.hasNext() && numRecordsExamined < maxRecordsToExamine) {
-            final SAMRecord record = iterator.next();
+            final ReadRecord record = iterator.next();
 
             if (revertOriginalBaseQualities && null != record.getOriginalBaseQualities()) {
                 // has OQ, break and return case #2

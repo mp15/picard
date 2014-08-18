@@ -24,12 +24,12 @@
 
 package picard.illumina;
 
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.ReservedTagConstants;
 import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.SAMFileReader;
 import htsjdk.samtools.SAMFileWriter;
 import htsjdk.samtools.SAMFileWriterFactory;
-import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.SAMRecordIterator;
 import htsjdk.samtools.metrics.MetricsFile;
 import htsjdk.samtools.util.CollectionUtil;
@@ -176,8 +176,8 @@ public class MarkIlluminaAdapters extends CommandLineProgram {
                 setThresholdForSelectingAdaptersToKeep(PRUNE_ADAPTER_LIST_AFTER_THIS_MANY_ADAPTERS_SEEN);
 
         while (iterator.hasNext()) {
-            final SAMRecord rec = iterator.next();
-            final SAMRecord rec2 = rec.getReadPairedFlag() && iterator.hasNext() ? iterator.next() : null;
+            final ReadRecord rec = iterator.next();
+            final ReadRecord rec2 = rec.getReadPairedFlag() && iterator.hasNext() ? iterator.next() : null;
             rec.setAttribute(ReservedTagConstants.XT, null);
 
             // Do the clipping one way for PE and another for SE reads
@@ -197,7 +197,7 @@ public class MarkIlluminaAdapters extends CommandLineProgram {
                 }
 
                 // establish which of pair is first and which second
-                final SAMRecord first, second;
+                final ReadRecord first, second;
 
                 if (rec.getFirstOfPairFlag() && rec2.getSecondOfPairFlag()){
                     first = rec;
@@ -218,7 +218,7 @@ public class MarkIlluminaAdapters extends CommandLineProgram {
             }
 
             // Then output the records, update progress and metrics
-            for (final SAMRecord r : new SAMRecord[] {rec, rec2}) {
+            for (final ReadRecord r : new ReadRecord[] {rec, rec2}) {
                 if (r != null) {
                     progress.record(r);
                     if (out != null) out.addAlignment(r);

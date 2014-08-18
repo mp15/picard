@@ -1,7 +1,7 @@
 package picard.analysis.directed;
 
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.SAMReadGroupRecord;
-import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.SamReader;
 import htsjdk.samtools.SamReaderFactory;
 import htsjdk.samtools.metrics.MetricsFile;
@@ -116,7 +116,7 @@ public abstract class CollectTargetedMetrics<METRIC extends MultilevelMetrics, C
         );
 
         final ProgressLogger progress = new ProgressLogger(log);
-        for (final SAMRecord record : reader) {
+        for (final ReadRecord record : reader) {
             collector.acceptRecord(record, null);
             progress.record(record);
         }

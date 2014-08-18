@@ -24,9 +24,9 @@
 
 package picard.sam;
 
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.SAMFileReader;
-import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.SAMTextHeaderCodec;
 import htsjdk.samtools.util.AsciiWriter;
 import htsjdk.samtools.util.IOUtil;
@@ -85,7 +85,7 @@ public class ViewSam extends CommandLineProgram {
                 new SAMTextHeaderCodec().encode(writer, header, true);
             }
 
-            for (final SAMRecord rec : in) {
+            for (final ReadRecord rec : in) {
                 if (printStream.checkError()) {
                     return 1;
                 }

@@ -23,11 +23,11 @@
  */
 package picard.sam;
 
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.SAMFileReader;
 import htsjdk.samtools.SAMFileWriter;
 import htsjdk.samtools.SAMFileWriterFactory;
-import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.util.IOUtil;
 import htsjdk.samtools.util.Log;
 import htsjdk.samtools.util.ProgressLogger;
@@ -71,7 +71,7 @@ public class SortSam extends CommandLineProgram {
 			    new ProgressLogger(log, (int) 1e7, "Wrote", "records from a sorting collection"));
 
         final ProgressLogger progress = new ProgressLogger(log, (int) 1e7, "Read");
-        for (final SAMRecord rec: reader) {
+        for (final ReadRecord rec: reader) {
             writer.addAlignment(rec);
             progress.record(rec);
         }

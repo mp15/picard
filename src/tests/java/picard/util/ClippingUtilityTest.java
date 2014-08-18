@@ -23,9 +23,10 @@
  */
 package picard.util;
 
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.ReservedTagConstants;
 import htsjdk.samtools.SAMFileHeader;
-import htsjdk.samtools.SAMRecord;
+import htsjdk.samtools.SAMRecordFactory;
 import htsjdk.samtools.util.SequenceUtil;
 import htsjdk.samtools.util.StringUtil;
 import org.testng.Assert;
@@ -61,7 +62,7 @@ public class ClippingUtilityTest {
         final SingleEndAdapter adapter = new SingleEndAdapter(testName, clip);
 
         for (final boolean reverse : new boolean[]{false, true}) {
-            final SAMRecord rec = new SAMRecord(null);
+            final ReadRecord rec = SAMRecordFactory.getInstance().createSAMRecord(null);
             if (reverse) {
                 rec.setReadString(SequenceUtil.reverseComplement(read));
                 rec.setReadNegativeStrandFlag(true);
@@ -101,10 +102,10 @@ public class ClippingUtilityTest {
     @Test(dataProvider="clipPairedTestData")
     public void testPairedEndClip(final String testName, final String read1, final String read2, final AdapterPair expected) {
 
-        final SAMRecord rec1 = new SAMRecord(new SAMFileHeader());
+        final ReadRecord rec1 = SAMRecordFactory.getInstance().createSAMRecord(new SAMFileHeader());
         rec1.setReadString(read1);
         rec1.setFirstOfPairFlag(true);
-        final SAMRecord rec2 = new SAMRecord(new SAMFileHeader());
+        final ReadRecord rec2 = SAMRecordFactory.getInstance().createSAMRecord(new SAMFileHeader());
         rec2.setReadString(read2);
         rec2.setSecondOfPairFlag(true);
 
@@ -124,8 +125,8 @@ public class ClippingUtilityTest {
         final int adapterLength = 30;
         final String read1 = patchAdapterSubsequenceIntoRead(makeBogusReadString(readLength), IlluminaAdapterPair.SINGLE_END.get3PrimeAdapterInReadOrder(), adapterLength);
         final String read2 = patchAdapterSubsequenceIntoRead(makeBogusReadString(readLength), IlluminaAdapterPair.SINGLE_END.get5PrimeAdapterInReadOrder(), adapterLength);
-        final SAMRecord rec1 = new SAMRecord(null); rec1.setReadString(read1);
-        final SAMRecord rec2 = new SAMRecord(null); rec2.setReadString(read2);
+        final ReadRecord rec1 = SAMRecordFactory.getInstance().createSAMRecord(null); rec1.setReadString(read1);
+        final ReadRecord rec2 = SAMRecordFactory.getInstance().createSAMRecord(null); rec2.setReadString(read2);
         AdapterPair result = ClippingUtility.adapterTrimIlluminaPairedReads(rec1, rec2, adapterLength - 2, 0.1,
                 IlluminaAdapterPair.PAIRED_END, IlluminaAdapterPair.SINGLE_END);
         Assert.assertEquals(result, IlluminaAdapterPair.SINGLE_END);
@@ -144,7 +145,7 @@ public class ClippingUtilityTest {
         for (final IlluminaAdapterPair adapterPair : IlluminaAdapterPair.values()) {
             final AdapterMarker marker = new AdapterMarker(adapterPair);
             for (int adapterPosition = 0; adapterPosition < readLength; ++adapterPosition) {
-                final SAMRecord rec = createSamRecordWithAdapterSequence(readLength, adapterPair, adapterPosition);
+                final ReadRecord rec = createSamRecordWithAdapterSequence(readLength, adapterPair, adapterPosition);
                 final AdapterPair matchedAdapter = ClippingUtility.adapterTrimIlluminaSingleRead(rec, minAdapterLength, 0.1, adapterPair);
                 final Object xt = rec.getAttribute(ReservedTagConstants.XT);
 
@@ -167,12 +168,12 @@ public class ClippingUtilityTest {
         }
     }
 
-    private SAMRecord createSamRecordWithAdapterSequence(final int readLength, final IlluminaAdapterPair adapterPair, final int adapterPosition) {
+    private ReadRecord createSamRecordWithAdapterSequence(final int readLength, final IlluminaAdapterPair adapterPair, final int adapterPosition) {
         final String adapterString = adapterPair.get3PrimeAdapterInReadOrder();
         final int replacementLength = Math.min(adapterString.length(), readLength - adapterPosition);
         final String adapterSubstring = adapterString.substring(0, replacementLength);
         final String readBases = replaceSubstring(makeBogusReadString(readLength), adapterSubstring, adapterPosition, adapterSubstring.length());
-        final SAMRecord rec = new SAMRecord(null);
+        final ReadRecord rec = SAMRecordFactory.getInstance().createSAMRecord(null);
         rec.setReadString(readBases);
         return rec;
     }
@@ -344,7 +345,7 @@ public class ClippingUtilityTest {
         for (int i = 0; i < thresholdForTruncatingAdapterList; ++i) {
 
             // First, a read with no adapter in it.
-            SAMRecord rec = new SAMRecord(null);
+            ReadRecord rec = SAMRecordFactory.getInstance().createSAMRecord(null);
             rec.setReadString(makeBogusReadString(readLength));
             AdapterPair matchedPair = marker.adapterTrimIlluminaSingleRead(rec);
             Assert.assertNull(matchedPair);

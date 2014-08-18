@@ -23,9 +23,9 @@
  */
 package picard.illumina;
 
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.ReservedTagConstants;
 import htsjdk.samtools.SAMFileReader;
-import htsjdk.samtools.SAMRecord;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -67,7 +67,7 @@ public class IlluminaBasecallsToSamAdapterClippingTest {
 
         // look for clipped adaptor attribute in lane 3 PE (2) and in lane 6 (1) non-PE
         int count = 0;   int matchCount = 0;
-        for (final SAMRecord record : samReader) {
+        for (final ReadRecord record : samReader) {
             if (record.getIntegerAttribute(ReservedTagConstants.XT) != null) {
                 count ++;
                 if ((count == 1 || count == 2) && LANE.equals("2")){

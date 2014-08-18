@@ -23,7 +23,7 @@
  */
 package picard.sam;
 
-import htsjdk.samtools.SAMRecord;
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.SAMUtils;
 
 import java.util.Collections;
@@ -75,7 +75,7 @@ public class BestEndMapqPrimaryAlignmentStrategy implements PrimaryAlignmentSele
      * Randomly picks one of the best alignments and puts it into the 0th slot of the list.
      * @param recs List of alignments sorted in descending order of alignment quality.
      */
-    private void randomlySelectPrimaryFromBest(List<SAMRecord> recs) {
+    private void randomlySelectPrimaryFromBest(List<ReadRecord> recs) {
         if (recs.isEmpty()) return;
         final int bestMapq = recs.get(0).getMappingQuality();
         int i;
@@ -83,14 +83,14 @@ public class BestEndMapqPrimaryAlignmentStrategy implements PrimaryAlignmentSele
         }
         final int bestIndex = random.nextInt(i);
         if (bestIndex == 0) return;
-        final SAMRecord tmp = recs.get(0);
+        final ReadRecord tmp = recs.get(0);
         recs.set(0, recs.get(bestIndex));
         recs.set(bestIndex, tmp);
     }
 
     // Sorts in descending order, but 255 is considered > 0 but < 1, and unmapped is worst of all
-    private static class MapqComparator implements Comparator<SAMRecord> {
-        public int compare(final SAMRecord rec1, final SAMRecord rec2) {
+    private static class MapqComparator implements Comparator<ReadRecord> {
+        public int compare(final ReadRecord rec1, final ReadRecord rec2) {
             if (rec1.getReadUnmappedFlag()) {
                 if (rec2.getReadUnmappedFlag()) return 0;
                 else return 1;

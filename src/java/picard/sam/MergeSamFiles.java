@@ -24,11 +24,11 @@
 package picard.sam;
 
 import htsjdk.samtools.MergingSamRecordIterator;
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.SAMFileReader;
 import htsjdk.samtools.SAMFileWriter;
 import htsjdk.samtools.SAMFileWriterFactory;
-import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.SAMSequenceDictionary;
 import htsjdk.samtools.SamFileHeaderMerger;
 import htsjdk.samtools.util.IOUtil;
@@ -152,7 +152,7 @@ public class MergeSamFiles extends CommandLineProgram {
         // Lastly loop through and write out the records
         final ProgressLogger progress = new ProgressLogger(log, PROGRESS_INTERVAL);
         while (iterator.hasNext()) {
-            final SAMRecord record = iterator.next();
+            final ReadRecord record = iterator.next();
             out.addAlignment(record);
             progress.record(record);
         }

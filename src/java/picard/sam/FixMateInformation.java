@@ -27,12 +27,12 @@ package picard.sam;
 import htsjdk.samtools.BAMRecordCodec;
 import htsjdk.samtools.BamFileIoUtils;
 import htsjdk.samtools.MergingSamRecordIterator;
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.SAMFileHeader.SortOrder;
 import htsjdk.samtools.SAMFileReader;
 import htsjdk.samtools.SAMFileWriter;
 import htsjdk.samtools.SAMFileWriterFactory;
-import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.SAMRecordQueryNameComparator;
 import htsjdk.samtools.SamFileHeaderMerger;
 import htsjdk.samtools.SamPairUtil;
@@ -128,12 +128,12 @@ public class FixMateInformation extends CommandLineProgram {
         }
 
         // Get the input records merged and sorted by query name as needed
-        final PeekableIterator<SAMRecord> iterator;
+        final PeekableIterator<ReadRecord> iterator;
         final SAMFileHeader header;
 
         {
             // Deal with merging if necessary
-            final Iterator<SAMRecord> tmp;
+            final Iterator<ReadRecord> tmp;
             if (INPUT.size() > 1) {
                 final List<SAMFileHeader> headers = new ArrayList<SAMFileHeader>(readers.size());
                 for (final SAMFileReader reader : readers) {
@@ -151,11 +151,11 @@ public class FixMateInformation extends CommandLineProgram {
 
             // And now deal with re-sorting if necessary
             if (ASSUME_SORTED || allQueryNameSorted) {
-                iterator = new PeekableIterator<SAMRecord>(tmp);
+                iterator = new PeekableIterator<ReadRecord>(tmp);
             }
             else {
                 log.info("Sorting input into queryname order.");
-                final SortingCollection<SAMRecord> sorter = SortingCollection.newInstance(SAMRecord.class,
+                final SortingCollection<ReadRecord> sorter = SortingCollection.newInstance(ReadRecord.class,
                                                                                           new BAMRecordCodec(header),
                                                                                           new SAMRecordQueryNameComparator(),
                                                                                           MAX_RECORDS_IN_RAM,
@@ -165,7 +165,7 @@ public class FixMateInformation extends CommandLineProgram {
 
                 }
 
-                iterator = new PeekableIterator<SAMRecord>(sorter.iterator()) {
+                iterator = new PeekableIterator<ReadRecord>(sorter.iterator()) {
                     @Override
                     public void close() {
                         super.close();
@@ -190,13 +190,13 @@ public class FixMateInformation extends CommandLineProgram {
         log.info("Traversing query name sorted records and fixing up mate pair information.");
         final ProgressLogger progress = new ProgressLogger(log);
         while (iterator.hasNext()) {
-            final SAMRecord rec1 = iterator.next();
+            final ReadRecord rec1 = iterator.next();
             if (rec1.isSecondaryOrSupplementary()) {
                 writeAlignment(rec1);
                 progress.record(rec1);
                 continue;
             }
-            SAMRecord rec2 = null;
+            ReadRecord rec2 = null;
             // Keep peeking at next SAMRecord until one is found that is not marked as secondary alignment,
             // or until there are no more SAMRecords.
             while (iterator.hasNext()) {
@@ -287,7 +287,7 @@ public class FixMateInformation extends CommandLineProgram {
 
     }
 
-    protected void writeAlignment(final SAMRecord sam) {
+    protected void writeAlignment(final ReadRecord sam) {
         out.addAlignment(sam);
     }
 

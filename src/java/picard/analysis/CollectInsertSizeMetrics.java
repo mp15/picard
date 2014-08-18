@@ -24,8 +24,8 @@
 
 package picard.analysis;
 
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.SAMFileHeader;
-import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.metrics.MetricsFile;
 import htsjdk.samtools.reference.ReferenceSequence;
 import htsjdk.samtools.util.CollectionUtil;
@@ -110,7 +110,7 @@ public class CollectInsertSizeMetrics extends SinglePassSamProgram {
         multiCollector = new InsertSizeMetricsCollector(METRIC_ACCUMULATION_LEVEL, header.getReadGroups(), MINIMUM_PCT, Histogram_WIDTH, DEVIATIONS);
     }
 
-    @Override protected void acceptRead(final SAMRecord record, final ReferenceSequence ref) {
+    @Override protected void acceptRead(final ReadRecord record, final ReferenceSequence ref) {
         multiCollector.acceptRecord(record, ref);
     }
 

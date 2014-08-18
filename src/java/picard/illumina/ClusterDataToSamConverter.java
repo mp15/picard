@@ -23,8 +23,9 @@
  */
 package picard.illumina;
 
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.ReservedTagConstants;
-import htsjdk.samtools.SAMRecord;
+import htsjdk.samtools.SAMRecordFactory;
 import htsjdk.samtools.SAMTag;
 import htsjdk.samtools.filter.SamRecordFilter;
 import htsjdk.samtools.filter.SolexaNoiseFilter;
@@ -97,8 +98,8 @@ public class ClusterDataToSamConverter implements
     /**
      * Creates a new SAM record from the basecall data
      */
-    private SAMRecord createSamRecord(final ReadData readData, final String readName, final boolean isPf, final boolean firstOfPair, final String unmatchedBarcode) {
-        final SAMRecord sam = new SAMRecord(null);
+    private ReadRecord createSamRecord(final ReadData readData, final String readName, final boolean isPf, final boolean firstOfPair, final String unmatchedBarcode) {
+        final ReadRecord sam = SAMRecordFactory.getInstance().createSAMRecord(null);
         sam.setReadName(readName);
         sam.setReadBases(readData.getBases());
         sam.setBaseQualities(readData.getQualities());
@@ -148,11 +149,11 @@ public class ClusterDataToSamConverter implements
             unmatchedBarcode = IlluminaUtil.barcodeSeqsToString(barcode).replace('.', 'N'); //TODO: This has a separator, where as in other places we do not use a separator
         }
 
-        final SAMRecord firstOfPair = createSamRecord(
+        final ReadRecord firstOfPair = createSamRecord(
             cluster.getRead(templateIndices[0]), readName, cluster.isPf(), true,unmatchedBarcode);
         ret.records[0] = firstOfPair;
 
-        SAMRecord secondOfPair = null;
+        ReadRecord secondOfPair = null;
 
         if(isPairedEnd) {
             secondOfPair  = createSamRecord(

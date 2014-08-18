@@ -1,8 +1,8 @@
 package picard.sam;
 
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.SAMFileReader;
 import htsjdk.samtools.SAMReadGroupRecord;
-import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.metrics.MetricsFile;
 import htsjdk.samtools.util.Histogram;
 import htsjdk.samtools.util.IOUtil;
@@ -246,7 +246,7 @@ public class EstimateLibraryComplexity extends AbstractDuplicateFindingAlgorithm
             final SAMFileReader in = new SAMFileReader(f);
             readGroups.addAll(in.getFileHeader().getReadGroups());
 
-            for (final SAMRecord rec : in) {
+            for (final ReadRecord rec : in) {
                 if (!rec.getReadPairedFlag()) continue;
                 if (!rec.getFirstOfPairFlag() && !rec.getSecondOfPairFlag()) {
                     continue;

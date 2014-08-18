@@ -24,7 +24,7 @@
 package picard.sam;
 
 import htsjdk.samtools.AlignmentBlock;
-import htsjdk.samtools.SAMRecord;
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.util.CoordMath;
 
 import java.util.ArrayList;
@@ -51,7 +51,7 @@ public class EarliestFragmentPrimaryAlignmentSelectionStrategy implements Primar
         int earliestMappedBase = Integer.MAX_VALUE;
         int bestMapQ = -1;
         for (int i = 0; i < hitsForInsert.numHits(); ++i) {
-            final SAMRecord rec = hitsForInsert.getFragment(i);
+            final ReadRecord rec = hitsForInsert.getFragment(i);
             if (rec.getReadUnmappedFlag()) continue;
             final int thisFirstMappedBase = getIndexOfFirstAlignedBase(rec);
             final int thisMapQ = rec.getMappingQuality();
@@ -81,7 +81,7 @@ public class EarliestFragmentPrimaryAlignmentSelectionStrategy implements Primar
      * Note that first is relative to 5' end, so that for reverse-strand alignment, the index of
      * the last base aligned is computed relative to the end of the read.
      */
-    int getIndexOfFirstAlignedBase(final SAMRecord rec) {
+    int getIndexOfFirstAlignedBase(final ReadRecord rec) {
         final List<AlignmentBlock> alignmentBlocks = rec.getAlignmentBlocks();
         if (rec.getReadNegativeStrandFlag()) {
             final AlignmentBlock alignmentBlock = alignmentBlocks.get(alignmentBlocks.size() - 1);

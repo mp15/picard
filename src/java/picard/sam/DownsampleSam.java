@@ -1,9 +1,9 @@
 package picard.sam;
 
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.SAMFileReader;
 import htsjdk.samtools.SAMFileWriter;
 import htsjdk.samtools.SAMFileWriterFactory;
-import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.util.IOUtil;
 import htsjdk.samtools.util.Log;
 import htsjdk.samtools.util.ProgressLogger;
@@ -61,7 +61,7 @@ public class DownsampleSam extends CommandLineProgram {
         
         final ProgressLogger progress = new ProgressLogger(log, (int) 1e7, "Read");
 
-        for (final SAMRecord rec : in) {
+        for (final ReadRecord rec : in) {
             if (rec.isSecondaryOrSupplementary()) continue;
             ++total;
 

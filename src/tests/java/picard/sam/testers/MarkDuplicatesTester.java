@@ -1,8 +1,8 @@
 package picard.sam.testers;
 
 
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.SAMFileReader;
-import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.util.TestUtil;
 import org.testng.Assert;
 import picard.cmdline.CommandLineProgram;
@@ -29,7 +29,7 @@ public class MarkDuplicatesTester extends SamFileTester {
         try {
             // Read the output and check the duplicate flag
             final SAMFileReader reader = new SAMFileReader(getOutput());
-            for (final SAMRecord record : reader) {
+            for (final ReadRecord record : reader) {
                 final String key = samRecordToDuplicatesFlagsKey(record);
                 Assert.assertTrue(this.duplicateFlags.containsKey(key));
                 final boolean value = this.duplicateFlags.get(key);

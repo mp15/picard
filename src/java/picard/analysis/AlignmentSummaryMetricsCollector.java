@@ -4,9 +4,9 @@ import htsjdk.samtools.AlignmentBlock;
 import htsjdk.samtools.BAMRecord;
 import htsjdk.samtools.CigarElement;
 import htsjdk.samtools.CigarOperator;
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.ReservedTagConstants;
 import htsjdk.samtools.SAMReadGroupRecord;
-import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.metrics.MetricsFile;
 import htsjdk.samtools.reference.ReferenceSequence;
 import htsjdk.samtools.util.CoordMath;
@@ -66,7 +66,7 @@ public class AlignmentSummaryMetricsCollector extends SAMRecordAndReferenceMulti
     }
 
     @Override
-    public void acceptRecord(final SAMRecord rec, final ReferenceSequence ref) {
+    public void acceptRecord(final ReadRecord rec, final ReferenceSequence ref) {
         if (!rec.isSecondaryOrSupplementary()) {
             super.acceptRecord(rec, ref);
         }
@@ -144,7 +144,7 @@ public class AlignmentSummaryMetricsCollector extends SAMRecordAndReferenceMulti
         }
 
         public void acceptRecord(final SAMRecordAndReference args) {
-            final SAMRecord rec         = args.getSamRecord();
+            final ReadRecord rec         = args.getSamRecord();
             final ReferenceSequence ref = args.getReferenceSequence();
 
             if (rec.getReadPairedFlag()) {
@@ -219,7 +219,7 @@ public class AlignmentSummaryMetricsCollector extends SAMRecordAndReferenceMulti
                 metrics.READ_GROUP = readGroup;
             }
 
-            public void addRecord(final SAMRecord record, final ReferenceSequence ref) {
+            public void addRecord(final ReadRecord record, final ReferenceSequence ref) {
                 if (record.isSecondaryOrSupplementary()) {
                     // only want 1 count per read so skip non primary alignments
                     return;
@@ -260,7 +260,7 @@ public class AlignmentSummaryMetricsCollector extends SAMRecordAndReferenceMulti
                 }
             }
 
-            private void collectReadData(final SAMRecord record, final ReferenceSequence ref) {
+            private void collectReadData(final ReadRecord record, final ReferenceSequence ref) {
                 metrics.TOTAL_READS++;
                 readLengthHistogram.increment(record.getReadBases().length);
 
@@ -300,7 +300,7 @@ public class AlignmentSummaryMetricsCollector extends SAMRecordAndReferenceMulti
                 }
             }
 
-            private void collectQualityData(final SAMRecord record, final ReferenceSequence reference) {
+            private void collectQualityData(final ReadRecord record, final ReferenceSequence reference) {
                 // If the read isnt an aligned PF read then look at the read for no-calls
                 if (record.getReadUnmappedFlag() || record.getReadFailsVendorQualityCheckFlag() || !doRefMetrics) {
                     final byte[] readBases = record.getReadBases();
@@ -372,12 +372,12 @@ public class AlignmentSummaryMetricsCollector extends SAMRecordAndReferenceMulti
                 }
             }
 
-            private boolean isNoiseRead(final SAMRecord record) {
+            private boolean isNoiseRead(final ReadRecord record) {
                 final Object noiseAttribute = record.getAttribute(ReservedTagConstants.XN);
                 return (noiseAttribute != null && noiseAttribute.equals(1));
             }
 
-            private boolean isHighQualityMapping(final SAMRecord record) {
+            private boolean isHighQualityMapping(final ReadRecord record) {
                 return !record.getReadFailsVendorQualityCheckFlag() &&
                         record.getMappingQuality() >= MAPPING_QUALITY_THRESOLD;
             }

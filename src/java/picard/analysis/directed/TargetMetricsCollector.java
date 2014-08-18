@@ -25,8 +25,8 @@
 package picard.analysis.directed;
 
 import htsjdk.samtools.AlignmentBlock;
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.SAMReadGroupRecord;
-import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.SAMSequenceRecord;
 import htsjdk.samtools.metrics.MetricBase;
 import htsjdk.samtools.metrics.MetricsFile;
@@ -231,7 +231,7 @@ public abstract class TargetMetricsCollector<METRIC_TYPE extends MultilevelMetri
     }
 
     @Override
-    protected PerUnitMetricCollector<METRIC_TYPE, Integer, SAMRecord> makeChildCollector(final String sample, final String library, final String readGroup) {
+    protected PerUnitMetricCollector<METRIC_TYPE, Integer, ReadRecord> makeChildCollector(final String sample, final String library, final String readGroup) {
         final PerUnitTargetMetricCollector collector =  new PerUnitTargetMetricCollector(probeSetName, coverageByTargetForRead.keySet(),
                                                                                          sample, library, readGroup, probeTerritory, targetTerritory, genomeSize,
                                                                                          intervalToGc);
@@ -243,7 +243,7 @@ public abstract class TargetMetricsCollector<METRIC_TYPE extends MultilevelMetri
     }
 
     @Override
-    protected PerUnitMetricCollector<METRIC_TYPE, Integer, SAMRecord> makeAllReadCollector() {
+    protected PerUnitMetricCollector<METRIC_TYPE, Integer, ReadRecord> makeAllReadCollector() {
         final PerUnitTargetMetricCollector collector = (PerUnitTargetMetricCollector) makeChildCollector(null, null, null);
         if (perTargetCoverage != null) {
             collector.setPerTargetOutput(perTargetCoverage);
@@ -255,7 +255,7 @@ public abstract class TargetMetricsCollector<METRIC_TYPE extends MultilevelMetri
     /**
      * Collect the Target Metrics for one unit of "accumulation" (i.e. for one sample, or for one library ...)
      */
-    public class PerUnitTargetMetricCollector implements PerUnitMetricCollector<METRIC_TYPE, Integer, SAMRecord> {
+    public class PerUnitTargetMetricCollector implements PerUnitMetricCollector<METRIC_TYPE, Integer, ReadRecord> {
 
         private final Map<Interval,Double> intervalToGc;
         private File perTargetOutput;
@@ -301,7 +301,7 @@ public abstract class TargetMetricsCollector<METRIC_TYPE extends MultilevelMetri
         }
 
         /** Adds information about an individual SAMRecord to the statistics. */
-        public void acceptRecord(final SAMRecord rec) {
+        public void acceptRecord(final ReadRecord rec) {
             // Just plain avoid records that are marked as not-primary
             if (rec.isSecondaryOrSupplementary()) return;
 

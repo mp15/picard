@@ -23,7 +23,7 @@
  */
 package picard.util;
 
-import htsjdk.samtools.SAMRecord;
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.util.CollectionUtil;
 import htsjdk.samtools.util.SequenceUtil;
 import htsjdk.samtools.util.StringUtil;
@@ -174,18 +174,18 @@ public class AdapterMarker {
         return this;
     }
 
-    public AdapterPair adapterTrimIlluminaSingleRead(final SAMRecord read) {
+    public AdapterPair adapterTrimIlluminaSingleRead(final ReadRecord read) {
         return adapterTrimIlluminaSingleRead(read, minSingleEndMatchBases, maxSingleEndErrorRate);
     }
 
-    public AdapterPair adapterTrimIlluminaPairedReads(final SAMRecord read1, final SAMRecord read2) {
+    public AdapterPair adapterTrimIlluminaPairedReads(final ReadRecord read1, final ReadRecord read2) {
         return adapterTrimIlluminaPairedReads(read1, read2, minPairMatchBases, maxPairErrorRate);
     }
 
     /**
      * Overrides defaults for minMatchBases and maxErrorRate
      */
-    public AdapterPair adapterTrimIlluminaSingleRead(final SAMRecord read, final int minMatchBases, final double maxErrorRate) {
+    public AdapterPair adapterTrimIlluminaSingleRead(final ReadRecord read, final int minMatchBases, final double maxErrorRate) {
         final AdapterPair ret = ClippingUtility.adapterTrimIlluminaSingleRead(read, minMatchBases, maxErrorRate, adapters.get());
         if (ret != null) tallyFoundAdapter(ret);
         return ret;
@@ -194,7 +194,7 @@ public class AdapterMarker {
     /**
      * Overrides defaults for minMatchBases and maxErrorRate
      */
-    public AdapterPair adapterTrimIlluminaPairedReads(final SAMRecord read1, final SAMRecord read2,
+    public AdapterPair adapterTrimIlluminaPairedReads(final ReadRecord read1, final ReadRecord read2,
                                                              final int minMatchBases, final double maxErrorRate) {
         final AdapterPair ret = ClippingUtility.adapterTrimIlluminaPairedReads(read1, read2, minMatchBases, maxErrorRate, adapters.get());
         if (ret != null) tallyFoundAdapter(ret);

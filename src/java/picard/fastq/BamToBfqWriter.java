@@ -23,10 +23,10 @@
  */
 package picard.fastq;
 
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.ReservedTagConstants;
 import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.SAMFileReader;
-import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.filter.AggregateFilter;
 import htsjdk.samtools.filter.FailsVendorReadQualityFilter;
 import htsjdk.samtools.filter.FilteringIterator;
@@ -129,7 +129,7 @@ public class BamToBfqWriter {
      */
     public void writeBfqFiles() {
 
-        final Iterator<SAMRecord> iterator = (new SAMFileReader(IOUtil.openFileForReading(this.bamFile))).iterator();
+        final Iterator<ReadRecord> iterator = (new SAMFileReader(IOUtil.openFileForReading(this.bamFile))).iterator();
 
         // Filter out noise reads and reads that fail the quality filter
         final TagFilter tagFilter = new TagFilter(ReservedTagConstants.XN, 1);
@@ -163,7 +163,7 @@ public class BamToBfqWriter {
      * @param tagFilter     the filter for noise reads
      * @param qualityFilter the filter for PF reads
      */
-    private void writePairedEndBfqs(final Iterator<SAMRecord> iterator, final TagFilter tagFilter,
+    private void writePairedEndBfqs(final Iterator<ReadRecord> iterator, final TagFilter tagFilter,
                                     final FailsVendorReadQualityFilter qualityFilter,
                                     SamRecordFilter ... otherFilters) {
         // Open the codecs for writing
@@ -173,11 +173,11 @@ public class BamToBfqWriter {
         int records = 0;
 
         RECORD_LOOP: while (iterator.hasNext()) {
-            final SAMRecord first = iterator.next();
+            final ReadRecord first = iterator.next();
             if (!iterator.hasNext()) {
                 throw new PicardException("Mismatched number of records in " + this.bamFile.getAbsolutePath());
             }
-            final SAMRecord second = iterator.next();
+            final ReadRecord second = iterator.next();
             if (!second.getReadName().equals(first.getReadName()) ||
                 first.getFirstOfPairFlag() == second.getFirstOfPairFlag()) {
                 throw new PicardException("Unmatched read pairs in " + this.bamFile.getAbsolutePath() +
@@ -225,7 +225,7 @@ public class BamToBfqWriter {
      * @param iterator  the iterator with he SAM Records to write
      * @param filters   the list of filters to be applied
      */
-    private void writeSingleEndBfqs(final Iterator<SAMRecord> iterator, final List<SamRecordFilter> filters) {
+    private void writeSingleEndBfqs(final Iterator<ReadRecord> iterator, final List<SamRecordFilter> filters) {
 
         // Open the codecs for writing
         int fileIndex = 0;
@@ -235,7 +235,7 @@ public class BamToBfqWriter {
 
         final FilteringIterator it = new FilteringIterator(iterator, new AggregateFilter(filters));
         while (it.hasNext()) {
-            final SAMRecord record = it.next();
+            final ReadRecord record = it.next();
             records++;
             if (records % increment == 0) {
 
@@ -283,7 +283,7 @@ public class BamToBfqWriter {
      * @param codec the code to write to
      * @param rec   the SAMRecord to write
      */
-    private void writeFastqRecord(final BinaryCodec codec, final SAMRecord rec) {
+    private void writeFastqRecord(final BinaryCodec codec, final ReadRecord rec) {
 
         // Trim the run barcode off the read name
         String readName = rec.getReadName();
@@ -386,7 +386,7 @@ public class BamToBfqWriter {
         	//but it doesn't check this early, nor produce an understandable error message."
         	throw new PicardException("Input file (" + this.bamFile.getAbsolutePath() +") needs to be sorted by queryname.");
         }
-        final PeekableIterator<SAMRecord> it = new PeekableIterator<SAMRecord>(reader.iterator());
+        final PeekableIterator<ReadRecord> it = new PeekableIterator<ReadRecord>(reader.iterator());
         if (!this.pairedReads) {
             // Filter out noise reads and reads that fail the quality filter
             final List<SamRecordFilter> filters = new ArrayList<SamRecordFilter>();
@@ -402,8 +402,8 @@ public class BamToBfqWriter {
         }
         else {
             while (it.hasNext()) {
-                final SAMRecord first = it.next();
-                final SAMRecord second = it.next();
+                final ReadRecord first = it.next();
+                final ReadRecord second = it.next();
                 // If both are noise reads, filter them out
                 if (first.getAttribute(ReservedTagConstants.XN) != null &&
                     second.getAttribute(ReservedTagConstants.XN) != null)  {

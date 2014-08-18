@@ -27,11 +27,11 @@
  */
 package picard.sam;
 
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.SAMFileReader;
 import htsjdk.samtools.SAMFileWriter;
 import htsjdk.samtools.SAMFileWriterFactory;
-import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.filter.AlignedFilter;
 import htsjdk.samtools.filter.FilteringIterator;
 import htsjdk.samtools.filter.ReadNameFilter;
@@ -127,7 +127,7 @@ public class FilterSamReads extends CommandLineProgram {
         final ProgressLogger progress = new ProgressLogger(log, (int) 1e6, "Written");
         
         while (filteringIterator.hasNext()) {
-            final SAMRecord rec = filteringIterator.next();
+            final ReadRecord rec = filteringIterator.next();
             outputWriter.addAlignment(rec);
             progress.record(rec);
         }
@@ -151,7 +151,7 @@ public class FilterSamReads extends CommandLineProgram {
         IOUtil.assertFileIsWritable(readsFile);
         final BufferedWriter bw = IOUtil.openFileForBufferedWriting(readsFile, false);
 
-        for (final SAMRecord rec : reader) {
+        for (final ReadRecord rec : reader) {
             bw.write(rec.toString() + "\n");
         }
 

@@ -23,11 +23,11 @@
  */
 package picard.sam;
 
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.SAMFileReader;
 import htsjdk.samtools.SAMProgramRecord;
 import htsjdk.samtools.SAMReadGroupRecord;
-import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.SAMSequenceRecord;
 import htsjdk.samtools.SecondaryOrSupplementarySkippingIterator;
 import picard.PicardException;
@@ -136,8 +136,8 @@ public class CompareSAMs extends CommandLineProgram {
                 new SecondaryOrSupplementarySkippingIterator(samReaders[1].iterator());
 
         // Save any reads which haven't been matched during in-order scan.
-        final Map<String, SAMRecord> leftUnmatched = new HashMap<String, SAMRecord>();
-        final Map<String, SAMRecord> rightUnmatched = new HashMap<String, SAMRecord>();
+        final Map<String, ReadRecord> leftUnmatched = new HashMap<String, ReadRecord>();
+        final Map<String, ReadRecord> rightUnmatched = new HashMap<String, ReadRecord>();
 
         boolean ret = true;
 
@@ -146,8 +146,8 @@ public class CompareSAMs extends CommandLineProgram {
                 // Exhausted right side.  See if any of the remaining left reads match
                 // any of the saved right reads.
                 for( ; itLeft.hasCurrent(); itLeft.advance()) {
-                    final SAMRecord left = itLeft.getCurrent();
-                    final SAMRecord right = rightUnmatched.remove(left.getReadName());
+                    final ReadRecord left = itLeft.getCurrent();
+                    final ReadRecord right = rightUnmatched.remove(left.getReadName());
                     if (right == null) {
                         ++missingRight;
                     } else {
@@ -158,11 +158,11 @@ public class CompareSAMs extends CommandLineProgram {
             }
             // Don't assume stability of order beyond the coordinate.  Therefore grab all the
             // reads from the left that has the same coordinate.
-            final SAMRecord left = itLeft.getCurrent();
-            final Map<String, SAMRecord> leftCurrentCoordinate = new HashMap<String, SAMRecord>();
+            final ReadRecord left = itLeft.getCurrent();
+            final Map<String, ReadRecord> leftCurrentCoordinate = new HashMap<String, ReadRecord>();
             leftCurrentCoordinate.put(left.getReadName(), left);
             while (itLeft.advance()) {
-                final SAMRecord nextLeft = itLeft.getCurrent();
+                final ReadRecord nextLeft = itLeft.getCurrent();
                 if (compareAlignmentCoordinates(left, nextLeft) == 0) {
                     leftCurrentCoordinate.put(nextLeft.getReadName(), nextLeft);
                 } else {
@@ -171,7 +171,7 @@ public class CompareSAMs extends CommandLineProgram {
             }
             // Advance the right iterator until it is >= the left reads that have just been grabbed
             while (itRight.hasCurrent() && compareAlignmentCoordinates(left, itRight.getCurrent()) > 0) {
-                final SAMRecord right = itRight.getCurrent();
+                final ReadRecord right = itRight.getCurrent();
                 rightUnmatched.put(right.getReadName(), right);
                 itRight.advance();
             }
@@ -179,8 +179,8 @@ public class CompareSAMs extends CommandLineProgram {
             // see if there is a matching left read.  If so, process and discard.  If not,
             // save the right read for later.
             for (;itRight.hasCurrent() && compareAlignmentCoordinates(left, itRight.getCurrent()) == 0; itRight.advance()) {
-                final SAMRecord right = itRight.getCurrent();
-                final SAMRecord matchingLeft = leftCurrentCoordinate.remove(right.getReadName());
+                final ReadRecord right = itRight.getCurrent();
+                final ReadRecord matchingLeft = leftCurrentCoordinate.remove(right.getReadName());
                 if (matchingLeft != null) {
                     ret = tallyAlignmentRecords(matchingLeft, right) && ret;
                 } else {
@@ -189,15 +189,15 @@ public class CompareSAMs extends CommandLineProgram {
             }
 
             // Anything left in leftCurrentCoordinate has not been matched
-            for (final SAMRecord samRecord : leftCurrentCoordinate.values()) {
+            for (final ReadRecord samRecord : leftCurrentCoordinate.values()) {
                 leftUnmatched.put(samRecord.getReadName(), samRecord);
             }
         }
         // The left iterator has been exhausted.  See if any of the remaining right reads
         // match any of the saved left reads.
         for( ; itRight.hasCurrent(); itRight.advance()) {
-            final SAMRecord right = itRight.getCurrent();
-            final SAMRecord left = leftUnmatched.remove(right.getReadName());
+            final ReadRecord right = itRight.getCurrent();
+            final ReadRecord left = leftUnmatched.remove(right.getReadName());
             if (left != null) {
                 tallyAlignmentRecords(left, right);
             } else {
@@ -207,10 +207,10 @@ public class CompareSAMs extends CommandLineProgram {
 
         // Look up reads that were unmatched from left, and see if they are in rightUnmatched.
         // If found, remove from rightUnmatched and tally.
-        for (final Map.Entry<String, SAMRecord> leftEntry : leftUnmatched.entrySet()) {
+        for (final Map.Entry<String, ReadRecord> leftEntry : leftUnmatched.entrySet()) {
             final String readName = leftEntry.getKey();
-            final SAMRecord left = leftEntry.getValue();
-            final SAMRecord right = rightUnmatched.remove(readName);
+            final ReadRecord left = leftEntry.getValue();
+            final ReadRecord right = rightUnmatched.remove(readName);
             if (right == null) {
                 ++missingRight;
                 continue;
@@ -229,7 +229,7 @@ public class CompareSAMs extends CommandLineProgram {
         return ret;
     }
 
-    private int compareAlignmentCoordinates(final SAMRecord left, final SAMRecord right) {
+    private int compareAlignmentCoordinates(final ReadRecord left, final ReadRecord right) {
         final String leftReferenceName = left.getReferenceName();
         final String rightReferenceName = right.getReferenceName();
         if (leftReferenceName == null && rightReferenceName == null) {
@@ -291,8 +291,8 @@ public class CompareSAMs extends CommandLineProgram {
                 missingRight += countRemaining(it1);
                 return false;
             }
-            final SAMRecord s1 = it1.getCurrent();
-            final SAMRecord s2 = it2.getCurrent();
+            final ReadRecord s1 = it1.getCurrent();
+            final ReadRecord s2 = it2.getCurrent();
             if (!compareValues(s1.getReadName(), s2.getReadName(), "Read names")) {
                 System.out.println("Read names cease agreeing in unsorted SAM files .  Comparison aborting.");
             }
@@ -314,7 +314,7 @@ public class CompareSAMs extends CommandLineProgram {
         return i;
     }
 
-    private boolean tallyAlignmentRecords(final SAMRecord s1, final SAMRecord s2) {
+    private boolean tallyAlignmentRecords(final ReadRecord s1, final ReadRecord s2) {
         if (!s1.getReadName().equals(s2.getReadName())) {
             throw new PicardException("Read names do not match: " + s1.getReadName() + " : " + s2.getReadName());
         }

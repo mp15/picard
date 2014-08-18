@@ -24,9 +24,9 @@
 
 package picard.analysis;
 
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.SAMReadGroupRecord;
-import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.metrics.MetricsFile;
 import htsjdk.samtools.reference.ReferenceSequence;
 import htsjdk.samtools.util.Histogram;
@@ -95,7 +95,7 @@ public class QualityScoreDistribution extends SinglePassSamProgram {
     }
 
     @Override
-    protected void acceptRead(final SAMRecord rec, final ReferenceSequence ref) {
+    protected void acceptRead(final ReadRecord rec, final ReferenceSequence ref) {
         // Skip unwanted records
         if (PF_READS_ONLY && rec.getReadFailsVendorQualityCheckFlag()) return;
         if (ALIGNED_READS_ONLY && rec.getReadUnmappedFlag()) return;

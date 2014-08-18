@@ -1,10 +1,10 @@
 package picard.sam.testers;
 
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.SAMFileReader;
 import htsjdk.samtools.SAMFileWriter;
 import htsjdk.samtools.SAMFileWriterFactory;
-import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.SAMRecordSetBuilder;
 import htsjdk.samtools.util.IOUtil;
 import org.testng.Assert;
@@ -68,7 +68,7 @@ public abstract class SamFileTester {
         this.noMateCigars = value;
     }
 
-    protected String samRecordToDuplicatesFlagsKey(final SAMRecord record) {
+    protected String samRecordToDuplicatesFlagsKey(final ReadRecord record) {
         String readName = record.getReadName()
                 + "-"
                 + record.getReadPairedFlag()
@@ -154,7 +154,7 @@ public abstract class SamFileTester {
 
     private void addFragment(final int referenceSequenceIndex, final int alignmentStart, final boolean recordUnmapped, final boolean isDuplicate, final String cigar,
                              final String qualityString, final int defaultQualityScore) {
-        final SAMRecord record = samRecordSetBuilder.addFrag("READ" + readNameCounter++, referenceSequenceIndex, alignmentStart, false,
+        final ReadRecord record = samRecordSetBuilder.addFrag("READ" + readNameCounter++, referenceSequenceIndex, alignmentStart, false,
                 recordUnmapped, cigar, qualityString, defaultQualityScore);
 
         this.duplicateFlags.put(samRecordToDuplicatesFlagsKey(record), isDuplicate);
@@ -173,11 +173,11 @@ public abstract class SamFileTester {
                             final boolean strand2,
                             final boolean firstOnly,
                             final int defaultQuality) {
-        final List<SAMRecord> samRecordList = samRecordSetBuilder.addPair("READ" + readNameCounter++, referenceSequenceIndex, alignmentStart1, alignmentStart2,
+        final List<ReadRecord> samRecordList = samRecordSetBuilder.addPair("READ" + readNameCounter++, referenceSequenceIndex, alignmentStart1, alignmentStart2,
                 record1Unmapped, record2Unmapped, cigar1, cigar2, strand1, strand2, defaultQuality);
 
-        final SAMRecord record1 = samRecordList.get(0);
-        final SAMRecord record2 = samRecordList.get(1);
+        final ReadRecord record1 = samRecordList.get(0);
+        final ReadRecord record2 = samRecordList.get(1);
 
         if (this.noMateCigars) {
             record1.setAttribute("MC", null);
@@ -215,7 +215,7 @@ public abstract class SamFileTester {
         // Create the input file
         final File input = new File(outputDir, "input.sam");
         final SAMFileWriter writer = new SAMFileWriterFactory().makeSAMOrBAMWriter(samRecordSetBuilder.getHeader(), true, input);
-        for (final SAMRecord record : samRecordSetBuilder.getRecords()) {
+        for (final ReadRecord record : samRecordSetBuilder.getRecords()) {
             writer.addAlignment(record);
         }
         writer.close();

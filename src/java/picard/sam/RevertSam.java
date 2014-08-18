@@ -25,13 +25,13 @@
 package picard.sam;
 
 import htsjdk.samtools.BAMRecordCodec;
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.SAMFileHeader.SortOrder;
 import htsjdk.samtools.SAMFileReader;
 import htsjdk.samtools.SAMFileWriter;
 import htsjdk.samtools.SAMFileWriterFactory;
 import htsjdk.samtools.SAMReadGroupRecord;
-import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.SAMRecordQueryNameComparator;
 import htsjdk.samtools.SAMRecordUtil;
 import htsjdk.samtools.SAMTag;
@@ -188,16 +188,16 @@ public class RevertSam extends CommandLineProgram {
         ////////////////////////////////////////////////////////////////////////////
         // Build a sorting collection to use if we are sanitizing
         ////////////////////////////////////////////////////////////////////////////
-        final SortingCollection<SAMRecord> sorter;
+        final SortingCollection<ReadRecord> sorter;
         if (sanitizing) {
-            sorter = SortingCollection.newInstance(SAMRecord.class, new BAMRecordCodec(outHeader), new SAMRecordQueryNameComparator(), MAX_RECORDS_IN_RAM);
+            sorter = SortingCollection.newInstance(ReadRecord.class, new BAMRecordCodec(outHeader), new SAMRecordQueryNameComparator(), MAX_RECORDS_IN_RAM);
         }
         else {
             sorter = null;
         }
 
         final ProgressLogger progress = new ProgressLogger(log, 1000000, "Reverted");
-        for (final SAMRecord rec : in) {
+        for (final ReadRecord rec : in) {
             // Weed out non-primary and supplemental read as we don't want duplicates in the reverted file!
             if (rec.isSecondaryOrSupplementary()) continue;
 
@@ -217,15 +217,15 @@ public class RevertSam extends CommandLineProgram {
         }
         else {
             long total = 0, discarded = 0;
-            final PeekableIterator<SAMRecord> iterator = new PeekableIterator<SAMRecord>(sorter.iterator());
+            final PeekableIterator<ReadRecord> iterator = new PeekableIterator<ReadRecord>(sorter.iterator());
             final ProgressLogger sanitizerProgress = new ProgressLogger(log, 1000000, "Sanitized");
 
             readNameLoop: while (iterator.hasNext()) {
-                final List<SAMRecord> recs = fetchByReadName(iterator);
+                final List<ReadRecord> recs = fetchByReadName(iterator);
                 total += recs.size();
 
                 // Check that all the reads have bases and qualities of the same length
-                for (final SAMRecord rec : recs) {
+                for (final ReadRecord rec : recs) {
                     if (rec.getReadBases().length != rec.getBaseQualities().length) {
                         log.debug("Discarding " + recs.size() + " reads with name " + rec.getReadName() + " for mismatching bases and quals length.");
                         discarded += recs.size();
@@ -243,7 +243,7 @@ public class RevertSam extends CommandLineProgram {
                 // Check that if we have paired reads there is exactly one first of pair and one second of pair
                 if (recs.get(0).getReadPairedFlag()) {
                     int firsts=0, seconds=0, unpaired=0;
-                    for (final SAMRecord rec : recs) {
+                    for (final ReadRecord rec : recs) {
                         if (!rec.getReadPairedFlag())  ++unpaired;
                         if (rec.getFirstOfPairFlag())  ++firsts;
                         if (rec.getSecondOfPairFlag()) ++seconds;
@@ -257,7 +257,7 @@ public class RevertSam extends CommandLineProgram {
                 }
 
                 // If we've made it this far spit the records into the output!
-                for (final SAMRecord rec : recs) {
+                for (final ReadRecord rec : recs) {
                     out.addAlignment(rec);
                     sanitizerProgress.record(rec);
                 }
@@ -282,11 +282,11 @@ public class RevertSam extends CommandLineProgram {
      * read and continuing while subsequent reads share the same read name. If there are no reads
      * remaining returns an empty list.
      */
-    private List<SAMRecord> fetchByReadName(final PeekableIterator<SAMRecord> iterator) {
-        final List<SAMRecord> out = new LinkedList<SAMRecord>();
+    private List<ReadRecord> fetchByReadName(final PeekableIterator<ReadRecord> iterator) {
+        final List<ReadRecord> out = new LinkedList<ReadRecord>();
 
         if (iterator.hasNext()) {
-            final SAMRecord first = iterator.next();
+            final ReadRecord first = iterator.next();
             out.add(first);
 
             while (iterator.hasNext() && iterator.peek().getReadName().equals(first.getReadName())) {
@@ -301,7 +301,7 @@ public class RevertSam extends CommandLineProgram {
      * Takes an individual SAMRecord and applies the set of changes/reversions to it that
      * have been requested by program level options.
      */
-    public void revertSamRecord(final SAMRecord rec) {
+    public void revertSamRecord(final ReadRecord rec) {
         if (RESTORE_ORIGINAL_QUALITIES) {
             final byte[] oq = rec.getOriginalBaseQualities();
             if (oq != null) {
@@ -321,10 +321,10 @@ public class RevertSam extends CommandLineProgram {
             }
 
             // Remove all alignment based information about the read itself
-            rec.setReferenceIndex(SAMRecord.NO_ALIGNMENT_REFERENCE_INDEX);
-            rec.setAlignmentStart(SAMRecord.NO_ALIGNMENT_START);
-            rec.setCigarString(SAMRecord.NO_ALIGNMENT_CIGAR);
-            rec.setMappingQuality(SAMRecord.NO_MAPPING_QUALITY);
+            rec.setReferenceIndex(ReadRecord.NO_ALIGNMENT_REFERENCE_INDEX);
+            rec.setAlignmentStart(ReadRecord.NO_ALIGNMENT_START);
+            rec.setCigarString(ReadRecord.NO_ALIGNMENT_CIGAR);
+            rec.setMappingQuality(ReadRecord.NO_MAPPING_QUALITY);
 
             if (!rec.getReadUnmappedFlag()) {
                 rec.setInferredInsertSize(0);
@@ -336,9 +336,9 @@ public class RevertSam extends CommandLineProgram {
 
             // Then remove any mate flags and info related to alignment
             if (rec.getReadPairedFlag()) {
-                rec.setMateAlignmentStart(SAMRecord.NO_ALIGNMENT_START);
+                rec.setMateAlignmentStart(ReadRecord.NO_ALIGNMENT_START);
                 rec.setMateNegativeStrandFlag(false);
-                rec.setMateReferenceIndex(SAMRecord.NO_ALIGNMENT_REFERENCE_INDEX);
+                rec.setMateReferenceIndex(ReadRecord.NO_ALIGNMENT_REFERENCE_INDEX);
                 rec.setMateUnmappedFlag(true);
             }
 

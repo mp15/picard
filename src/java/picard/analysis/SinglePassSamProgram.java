@@ -1,9 +1,9 @@
 package picard.analysis;
 
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.SAMFileHeader.SortOrder;
 import htsjdk.samtools.SAMFileReader;
-import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.reference.ReferenceSequence;
 import htsjdk.samtools.reference.ReferenceSequenceFileWalker;
 import htsjdk.samtools.util.IOUtil;
@@ -104,9 +104,9 @@ public abstract class SinglePassSamProgram extends CommandLineProgram {
 
         final ProgressLogger progress = new ProgressLogger(log);
 
-        for (final SAMRecord rec : in) {
+        for (final ReadRecord rec : in) {
             final ReferenceSequence ref;
-            if (walker == null || rec.getReferenceIndex() == SAMRecord.NO_ALIGNMENT_REFERENCE_INDEX) {
+            if (walker == null || rec.getReferenceIndex() == ReadRecord.NO_ALIGNMENT_REFERENCE_INDEX) {
                 ref = null;
             }
             else {
@@ -125,7 +125,7 @@ public abstract class SinglePassSamProgram extends CommandLineProgram {
             }
 
             // And see if we're into the unmapped reads at the end
-            if (!anyUseNoRefReads && rec.getReferenceIndex() == SAMRecord.NO_ALIGNMENT_REFERENCE_INDEX) {
+            if (!anyUseNoRefReads && rec.getReferenceIndex() == ReadRecord.NO_ALIGNMENT_REFERENCE_INDEX) {
                 break;
             }
         }
@@ -148,7 +148,7 @@ public abstract class SinglePassSamProgram extends CommandLineProgram {
      * If the read has a reference sequence and a reference sequence file was supplied to the program
      * it will be passed as 'ref'. Otherwise 'ref' may be null.
      */
-    protected abstract void acceptRead(final SAMRecord rec, final ReferenceSequence ref);
+    protected abstract void acceptRead(final ReadRecord rec, final ReferenceSequence ref);
 
     /** Should be implemented by subclasses to do one-time finalization work. */
     protected abstract void finish();

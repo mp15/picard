@@ -24,8 +24,8 @@
 
 package picard.analysis;
 
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.SAMFileHeader;
-import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.metrics.MetricsFile;
 import htsjdk.samtools.reference.ReferenceSequence;
 import htsjdk.samtools.util.CollectionUtil;
@@ -110,7 +110,7 @@ public class CollectAlignmentSummaryMetrics extends SinglePassSamProgram {
                 ADAPTER_SEQUENCE, MAX_INSERT_SIZE,  IS_BISULFITE_SEQUENCED);
     }
 
-    @Override protected void acceptRead(final SAMRecord rec, final ReferenceSequence ref) {
+    @Override protected void acceptRead(final ReadRecord rec, final ReferenceSequence ref) {
         collector.acceptRecord(rec, ref);
     }
 

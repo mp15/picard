@@ -23,10 +23,10 @@
  */
 package picard.sam;
 
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.SAMFileReader;
 import htsjdk.samtools.SAMFileWriter;
 import htsjdk.samtools.SAMFileWriterFactory;
-import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.ValidationStringency;
 import htsjdk.samtools.util.CloseableIterator;
 import htsjdk.samtools.util.IOUtil;
@@ -75,12 +75,12 @@ public class CleanSam extends CommandLineProgram {
         try {
             final SAMFileReader reader = new SAMFileReader(INPUT);
             final SAMFileWriter writer = new SAMFileWriterFactory().makeSAMOrBAMWriter(reader.getFileHeader(), true, OUTPUT);
-            final CloseableIterator<SAMRecord> it = reader.iterator();
+            final CloseableIterator<ReadRecord> it = reader.iterator();
             final ProgressLogger progress = new ProgressLogger(Log.getInstance(CleanSam.class));
 
             // If the read (or its mate) maps off the end of the alignment, clip it
             while(it.hasNext()) {
-                final SAMRecord rec = it.next();
+                final ReadRecord rec = it.next();
 
                 // If the read (or its mate) maps off the end of the alignment, clip it
                 AbstractAlignmentMerger.createNewCigarsIfMapsOffEndOfReference(rec);

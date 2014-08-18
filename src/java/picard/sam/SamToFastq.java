@@ -23,9 +23,9 @@
  */
 package picard.sam;
 
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.SAMFileReader;
 import htsjdk.samtools.SAMReadGroupRecord;
-import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.SAMUtils;
 import htsjdk.samtools.SAMValidationError;
 import htsjdk.samtools.fastq.FastqRecord;
@@ -140,13 +140,13 @@ public class SamToFastq extends CommandLineProgram {
     protected int doWork() {
         IOUtil.assertFileIsReadable(INPUT);
         final SAMFileReader reader = new SAMFileReader(IOUtil.openFileForReading(INPUT));
-        final Map<String, SAMRecord> firstSeenMates = new HashMap<String, SAMRecord>();
+        final Map<String, ReadRecord> firstSeenMates = new HashMap<String, ReadRecord>();
         final FastqWriterFactory factory = new FastqWriterFactory();
         factory.setCreateMd5(CREATE_MD5_FILE);
         final Map<SAMReadGroupRecord, FastqWriters> writers = generateWriters(reader.getFileHeader().getReadGroups(), factory);
 
         final ProgressLogger progress = new ProgressLogger(log);
-        for (final SAMRecord currentRecord : reader) {
+        for (final ReadRecord currentRecord : reader) {
             if (currentRecord.isSecondaryOrSupplementary() && !INCLUDE_NON_PRIMARY_ALIGNMENTS)
                 continue;
 
@@ -157,15 +157,15 @@ public class SamToFastq extends CommandLineProgram {
             final FastqWriters fq = writers.get(currentRecord.getReadGroup());
             if (currentRecord.getReadPairedFlag()) {
                 final String currentReadName = currentRecord.getReadName();
-                final SAMRecord firstRecord = firstSeenMates.remove(currentReadName);
+                final ReadRecord firstRecord = firstSeenMates.remove(currentReadName);
                 if (firstRecord == null) {
                     firstSeenMates.put(currentReadName, currentRecord);
                 } else {
                     assertPairedMates(firstRecord, currentRecord);
 
-                    final SAMRecord read1 =
+                    final ReadRecord read1 =
                             currentRecord.getFirstOfPairFlag() ? currentRecord : firstRecord;
-                    final SAMRecord read2 =
+                    final ReadRecord read2 =
                             currentRecord.getFirstOfPairFlag() ? firstRecord : currentRecord;
                     writeRecord(read1, 1, fq.getFirstOfPair(), READ1_TRIM, READ1_MAX_BASES_TO_WRITE);
                     final FastqWriter secondOfPairWriter = fq.getSecondOfPair();
@@ -265,7 +265,7 @@ public class SamToFastq extends CommandLineProgram {
         return result;
     }
 
-    void writeRecord(final SAMRecord read, final Integer mateNumber, final FastqWriter writer,
+    void writeRecord(final ReadRecord read, final Integer mateNumber, final FastqWriter writer,
                      final int basesToTrim, final Integer maxBasesToWrite) {
         final String seqHeader = mateNumber == null ? read.getReadName() : read.getReadName() + "/" + mateNumber;
         String readString = read.getReadString();
@@ -338,7 +338,7 @@ public class SamToFastq extends CommandLineProgram {
         return result;
     }
 
-    private void assertPairedMates(final SAMRecord record1, final SAMRecord record2) {
+    private void assertPairedMates(final ReadRecord record1, final ReadRecord record2) {
         if (!(record1.getFirstOfPairFlag() && record2.getSecondOfPairFlag() ||
                 record2.getFirstOfPairFlag() && record1.getSecondOfPairFlag())) {
             throw new PicardException("Illegal mate state: " + record1.getReadName());

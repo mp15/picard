@@ -25,6 +25,7 @@
 package picard.sam;
 
 import htsjdk.samtools.MergingSamRecordIterator;
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.ReservedTagConstants;
 import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.SAMFileHeader.SortOrder;
@@ -33,7 +34,6 @@ import htsjdk.samtools.SAMFileWriter;
 import htsjdk.samtools.SAMFileWriterFactory;
 import htsjdk.samtools.SAMProgramRecord;
 import htsjdk.samtools.SAMReadGroupRecord;
-import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.SAMTag;
 import htsjdk.samtools.SamFileHeaderMerger;
 import htsjdk.samtools.metrics.MetricsFile;
@@ -234,9 +234,9 @@ public class MarkDuplicates extends AbstractDuplicateFindingAlgorithm {
         }
 
         final ProgressLogger progress = new ProgressLogger(log, (int) 1e7, "Written");
-        final CloseableIterator<SAMRecord> iterator = headerAndIterator.iterator;
+        final CloseableIterator<ReadRecord> iterator = headerAndIterator.iterator;
         while (iterator.hasNext()) {
-            final SAMRecord rec = iterator.next();
+            final ReadRecord rec = iterator.next();
             if (!rec.isSecondaryOrSupplementary()) {
                 final String library = getLibraryName(header, rec);
                 DuplicationMetrics metrics = metricsByLibrary.get(library);
@@ -335,9 +335,9 @@ public class MarkDuplicates extends AbstractDuplicateFindingAlgorithm {
     /** Little class used to package up a header and an iterable/iterator. */
     private static final class SamHeaderAndIterator {
         final SAMFileHeader header;
-        final CloseableIterator<SAMRecord> iterator;
+        final CloseableIterator<ReadRecord> iterator;
 
-        private SamHeaderAndIterator(final SAMFileHeader header, final CloseableIterator<SAMRecord> iterator) {
+        private SamHeaderAndIterator(final SAMFileHeader header, final CloseableIterator<ReadRecord> iterator) {
             this.header = header;
             this.iterator = iterator;
         }
@@ -407,10 +407,10 @@ public class MarkDuplicates extends AbstractDuplicateFindingAlgorithm {
         final ReadEndsMap tmp = new DiskReadEndsMap(MAX_FILE_HANDLES_FOR_READ_ENDS_MAP);
         long index = 0;
         final ProgressLogger progress = new ProgressLogger(log, (int) 1e6, "Read");
-        final CloseableIterator<SAMRecord> iterator = headerAndIterator.iterator;
+        final CloseableIterator<ReadRecord> iterator = headerAndIterator.iterator;
 
         while (iterator.hasNext()) {
-            final SAMRecord rec = iterator.next();
+            final ReadRecord rec = iterator.next();
 
             // This doesn't have anything to do with building sorted ReadEnd lists, but it can be done in the same pass
             // over the input
@@ -484,7 +484,7 @@ public class MarkDuplicates extends AbstractDuplicateFindingAlgorithm {
     }
 
     /** Builds a read ends object that represents a single read. */
-    private ReadEnds buildReadEnds(final SAMFileHeader header, final long index, final SAMRecord rec) {
+    private ReadEnds buildReadEnds(final SAMFileHeader header, final long index, final ReadRecord rec) {
         final ReadEnds ends = new ReadEnds();
         ends.read1Sequence    = rec.getReferenceIndex();
         ends.read1Coordinate  = rec.getReadNegativeStrandFlag() ? rec.getUnclippedEnd() : rec.getUnclippedStart();
@@ -519,7 +519,7 @@ public class MarkDuplicates extends AbstractDuplicateFindingAlgorithm {
     }
 
     /** Get the library ID for the given SAM record. */
-    private short getLibraryId(final SAMFileHeader header, final SAMRecord rec) {
+    private short getLibraryId(final SAMFileHeader header, final ReadRecord rec) {
         final String library = getLibraryName(header, rec);
         Short libraryId = this.libraryIds.get(library);
 
@@ -536,7 +536,7 @@ public class MarkDuplicates extends AbstractDuplicateFindingAlgorithm {
      * the record, or the library isn't denoted on the read group, a constant string is
      * returned.
      */
-    private String getLibraryName(final SAMFileHeader header, final SAMRecord rec) {
+    private String getLibraryName(final SAMFileHeader header, final ReadRecord rec) {
         final String readGroupId = (String) rec.getAttribute("RG");
 
         if (readGroupId != null) {
@@ -566,7 +566,7 @@ public class MarkDuplicates extends AbstractDuplicateFindingAlgorithm {
 
 
     /** Calculates a score for the read which is the sum of scores over Q20. */
-    private short getScore(final SAMRecord rec) {
+    private short getScore(final ReadRecord rec) {
         short score = 0;
         for (final byte b : rec.getBaseQualities()) {
             if (b >= 15) score += b;

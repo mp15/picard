@@ -23,13 +23,14 @@
  */
 package picard.sam;
 
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.ReservedTagConstants;
 import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.SAMFileHeader.SortOrder;
 import htsjdk.samtools.SAMFileWriter;
 import htsjdk.samtools.SAMFileWriterFactory;
 import htsjdk.samtools.SAMReadGroupRecord;
-import htsjdk.samtools.SAMRecord;
+import htsjdk.samtools.SAMRecordFactory;
 import htsjdk.samtools.SAMUtils;
 import htsjdk.samtools.fastq.FastqReader;
 import htsjdk.samtools.fastq.FastqRecord;
@@ -168,7 +169,7 @@ public class FastqToSam extends CommandLineProgram {
         final ProgressLogger progress = new ProgressLogger(LOG);
         for ( ; freader.hasNext()  ; readCount++) {
             final FastqRecord frec = freader.next();
-            final SAMRecord srec = createSamRecord(header, getReadName(frec.getReadHeader(), false) , frec, false) ;
+            final ReadRecord srec = createSamRecord(header, getReadName(frec.getReadHeader(), false) , frec, false) ;
             srec.setReadPairedFlag(false);
             writer.addAlignment(srec);
             progress.record(srec);
@@ -199,13 +200,13 @@ public class FastqToSam extends CommandLineProgram {
             final String frec2Name = getReadName(frec2.getReadHeader(), true);
             final String baseName = getBaseName(frec1Name, frec2Name, freader1, freader2);
 
-            final SAMRecord srec1 = createSamRecord(header, baseName, frec1, true) ;
+            final ReadRecord srec1 = createSamRecord(header, baseName, frec1, true) ;
             srec1.setFirstOfPairFlag(true);
             srec1.setSecondOfPairFlag(false);
             writer.addAlignment(srec1);
             progress.record(srec1);
 
-            final SAMRecord srec2 = createSamRecord(header, baseName, frec2, true) ;
+            final ReadRecord srec2 = createSamRecord(header, baseName, frec2, true) ;
             srec2.setFirstOfPairFlag(false);
             srec2.setSecondOfPairFlag(true);
             writer.addAlignment(srec2);
@@ -221,8 +222,8 @@ public class FastqToSam extends CommandLineProgram {
         return readCount;
     }
 
-    private SAMRecord createSamRecord(final SAMFileHeader header, final String baseName, final FastqRecord frec, final boolean paired) {
-        final SAMRecord srec = new SAMRecord(header);
+    private ReadRecord createSamRecord(final SAMFileHeader header, final String baseName, final FastqRecord frec, final boolean paired) {
+        final ReadRecord srec = SAMRecordFactory.getInstance().createSAMRecord(header);
         srec.setReadName(baseName);
         srec.setReadString(frec.getReadString());
         srec.setReadUnmappedFlag(true);

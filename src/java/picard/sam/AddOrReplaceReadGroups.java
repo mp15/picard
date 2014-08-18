@@ -1,12 +1,12 @@
 package picard.sam;
 
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.SAMFileHeader.SortOrder;
 import htsjdk.samtools.SAMFileReader;
 import htsjdk.samtools.SAMFileWriter;
 import htsjdk.samtools.SAMFileWriterFactory;
 import htsjdk.samtools.SAMReadGroupRecord;
-import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.SAMTag;
 import htsjdk.samtools.util.IOUtil;
 import htsjdk.samtools.util.Iso8601Date;
@@ -104,7 +104,7 @@ public class AddOrReplaceReadGroups extends CommandLineProgram {
                                                                                       OUTPUT);
 
         final ProgressLogger progress = new ProgressLogger(log);
-        for (final SAMRecord read : in) {
+        for (final ReadRecord read : in) {
             read.setAttribute(SAMTag.RG.name(), RGID);
             outWriter.addAlignment(read);
             progress.record(read);

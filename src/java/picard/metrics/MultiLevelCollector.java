@@ -24,8 +24,8 @@
 
 package picard.metrics;
 
+import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.SAMReadGroupRecord;
-import htsjdk.samtools.SAMRecord;
 import htsjdk.samtools.metrics.MetricBase;
 import htsjdk.samtools.metrics.MetricsFile;
 import htsjdk.samtools.reference.ReferenceSequence;
@@ -76,7 +76,7 @@ public abstract class MultiLevelCollector<METRIC_TYPE extends MetricBase, Histog
 
     //Convert the current SAMRecord and the ReferenceSequence for that record into an ARGTYPE object
     //see accept record for use
-    protected abstract ARGTYPE makeArg(final SAMRecord samRec, final ReferenceSequence refSeq);
+    protected abstract ARGTYPE makeArg(final ReadRecord samRec, final ReferenceSequence refSeq);
 
     /**
      * Construct a PerUnitMetricCollector with the given arguments.
@@ -308,7 +308,7 @@ public abstract class MultiLevelCollector<METRIC_TYPE extends MetricBase, Histog
      * Construct a argument of ARGTYPE using the given SAMRecord and ReferenceSequence then pass
      * this value to all collectors that should include this record
      */
-    public void acceptRecord(final SAMRecord record, final ReferenceSequence refSeq) {
+    public void acceptRecord(final ReadRecord record, final ReferenceSequence refSeq) {
         final ARGTYPE arg = makeArg(record, refSeq);
 
         for(final Distributor collector : outputOrderedDistributors) {
