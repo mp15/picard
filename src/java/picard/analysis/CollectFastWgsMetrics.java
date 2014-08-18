@@ -272,6 +272,6 @@ class FastCountingMapQFilter extends FastCountingFilter {
 
 /** Counting filter that discards reads that are unpaired in sequencing and paired reads who's mates are not mapped. */
 class FastCountingPairedFilter extends FastCountingFilter {
-    @Override public boolean reallyFilterOut(final ReadRecord record) { return !record.getReadPairedFlag() || record.getMateUnmappedFlag(); }
+    @Override public boolean reallyFilterOut(final ReadRecord record) { return !record.isPaired() || record.getMateUnmappedFlag(); }
 }
 
