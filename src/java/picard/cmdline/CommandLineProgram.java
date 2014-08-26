@@ -39,6 +39,8 @@ import htsjdk.samtools.util.Log;
 import htsjdk.samtools.util.zip.DeflaterFactory;
 
 import java.io.File;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -64,7 +66,7 @@ import java.util.Map;
  * 4. Implement the following static method in the concrete class:
  *
  *     public static void main(String[] argv) {
-        new MyConcreteClass().instanceMainWithExit(argv);
+        new MyConcreteClass().instanceMain(argv);
     }
 
 
@@ -266,13 +268,6 @@ public abstract class CommandLineProgram {
 
     public CommandLineParser getCommandLineParser() {
         return commandLineParser;
-    }
-
-    /**
-     * @return This is a little-used version string that can be put in the @Usage annotation
-     */
-    public String getProgramVersion() {
-        return commandLineParser.getProgramVersion();
     }
 
 
