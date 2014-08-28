@@ -64,9 +64,6 @@ public class MarkDuplicatesWithMateCigarIterator implements SAMRecordIterator {
     /** We can flush our queues and buffers if we move to a different reference index */
     private int referenceIndex = 0;
 
-    // TODO: document, when/if used
-    //private final Set<String> isDuplicateMarkedSet = new HashSet<String>();
-
     /**
      * This buffer contains all the records read from input in the same order.  Nonetheless, each record
      * must be examined for duplicate marking, and so we may need to wait for this process to occur.  This
@@ -122,7 +119,7 @@ public class MarkDuplicatesWithMateCigarIterator implements SAMRecordIterator {
                                                final boolean skipPairsWithNoMateCigar,
                                                final int maxRecordsInRam,
                                                final int blockSize,
-                                               final List<File> tmpDirs) throws PicardException {
+                                               final List<File> tmpDirs) {
         if (header.getSortOrder() != SAMFileHeader.SortOrder.coordinate) {
             throw new PicardException(this.getClass().getName() + " expects the input to be in coordinate sort order.");
         }
@@ -134,8 +131,8 @@ public class MarkDuplicatesWithMateCigarIterator implements SAMRecordIterator {
         this.removeDuplicates = removeDuplicates;
         this.skipPairsWithNoMateCigar = skipPairsWithNoMateCigar;
         this.opticalDuplicateFinder = opticalDuplicateFinder;
-        toMarkQueue = new MarkQueue(duplicateScoringStrategy);
-        libraryIdGenerator = new LibraryIdGenerator(header);
+        this.toMarkQueue = new MarkQueue(duplicateScoringStrategy);
+        this.libraryIdGenerator = new LibraryIdGenerator(header);
 
         // Check for supported scoring strategies
         switch (duplicateScoringStrategy) {
