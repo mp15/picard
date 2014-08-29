@@ -173,10 +173,10 @@ public class GenotypeConcordance extends CommandLineProgram {
     /** Outputs the detailed tables for SNP and Indel match categories. */
     private void outputDetailsTable(final PrintStream out, final ConcordanceResults counter, final String description) {
         out.println("## " + description + ":");
-        for (final State truthSate : State.values()) {
-            for (final State callState : State.values()) {
-                final long count = counter.getCount(truthSate, callState);
-                if (count > 0 || OUTPUT_ALL_ROWS) out.println(truthSate + "\t" + callState + "\t" + count);
+        for (final State callState : State.values()) {
+            for (final State truthSate : State.values()) {
+                    final long count = counter.getCount(callState, truthSate);
+                if (count > 0 || OUTPUT_ALL_ROWS) out.println(callState + "\t" + truthSate + "\t" + count);
             }
         }
     }
