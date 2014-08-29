@@ -30,6 +30,7 @@ import htsjdk.samtools.FastBAMRecord;
 import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.SAMRecordQueryNameComparator;
 import htsjdk.samtools.SAMTag;
+import htsjdk.samtools.SAMTagUtil;
 import htsjdk.samtools.SAMUtils;
 import htsjdk.samtools.filter.FilteringIterator;
 import htsjdk.samtools.filter.SamRecordFilter;
@@ -158,11 +159,11 @@ class MultiHitAlignedReadIterator implements CloseableIterator<HitsForInsert> {
         if (hits.numHits() <= 1) {
             // No HI tags needed if only a single hit
             if (hits.getFirstOfPair(0) != null) {
-                hits.getFirstOfPair(0).setAttribute(SAMTag.HI.name(), null);
+                hits.getFirstOfPair(0).setAttribute(SAMTagUtil.HI, null);
                 hits.getFirstOfPair(0).setNotPrimaryAlignmentFlag(false);
             }
             if (hits.getSecondOfPair(0) != null) {
-                hits.getSecondOfPair(0).setAttribute(SAMTag.HI.name(), null);
+                hits.getSecondOfPair(0).setAttribute(SAMTagUtil.HI, null);
                 hits.getSecondOfPair(0).setNotPrimaryAlignmentFlag(false);
             }
         } else {
