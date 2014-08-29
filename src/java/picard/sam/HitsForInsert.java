@@ -23,8 +23,10 @@
  */
 package picard.sam;
 
+import htsjdk.samtools.FastBAMRecord;
 import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.SAMTag;
+import htsjdk.samtools.SAMTagUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -209,13 +211,13 @@ class HitsForInsert {
             final ReadRecord first = getFirstOfPair(i);
             final ReadRecord second = getSecondOfPair(i);
             if (first != null && second != null) {
-                first.setAttribute(SAMTag.HI.name(), i);
-                second.setAttribute(SAMTag.HI.name(), i);
+                ((FastBAMRecord) first).setIntegerAttribute(SAMTagUtil.HI, i);
+                ((FastBAMRecord) second).setIntegerAttribute(SAMTagUtil.HI, i);
                 ++hi;
             } else if (first != null) {
-                first.setAttribute(SAMTag.HI.name(), null);
+                ((FastBAMRecord) first).deleteAttribute(SAMTagUtil.HI);
             } else {
-                second.setAttribute(SAMTag.HI.name(), null);
+                ((FastBAMRecord) second).deleteAttribute(SAMTagUtil.HI);
             }
         }
     }
@@ -260,8 +262,8 @@ class HitsForInsert {
     // null HI tag sorts after any non-null.
     private static class HitIndexComparator implements Comparator<ReadRecord> {
         public int compare(final ReadRecord rec1, final ReadRecord rec2) {
-            final Integer hi1 = rec1.getIntegerAttribute(SAMTag.HI.name());
-            final Integer hi2 = rec2.getIntegerAttribute(SAMTag.HI.name());
+            final Integer hi1 = ((FastBAMRecord) rec1).getIntegerAttribute(SAMTagUtil.HI);
+            final Integer hi2 = ((FastBAMRecord) rec2).getIntegerAttribute(SAMTagUtil.HI);
             if (hi1 == null) {
                 if (hi2 == null) return 0;
                 else return 1;

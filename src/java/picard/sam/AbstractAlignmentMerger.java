@@ -26,6 +26,7 @@ package picard.sam;
 import htsjdk.samtools.BAMRecordCodec;
 import htsjdk.samtools.Cigar;
 import htsjdk.samtools.CigarElement;
+import htsjdk.samtools.FastBAMRecord;
 import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.ReservedTagConstants;
 import htsjdk.samtools.SAMFileHeader;
@@ -40,6 +41,7 @@ import htsjdk.samtools.SAMRecordUtil;
 import htsjdk.samtools.SAMSequenceDictionary;
 import htsjdk.samtools.SAMSequenceRecord;
 import htsjdk.samtools.SAMTag;
+import htsjdk.samtools.SAMTagUtil;
 import htsjdk.samtools.SAMUtils;
 import htsjdk.samtools.SamPairUtil;
 import htsjdk.samtools.filter.FilteringIterator;
@@ -102,8 +104,8 @@ public abstract class AbstractAlignmentMerger {
     private SAMProgramRecord programRecord;
     private final boolean alignedReadsOnly;
     private final SAMFileHeader header;
-    private final List<String> attributesToRetain = new ArrayList<String>();
-    private final List<String> attributesToRemove = new ArrayList<String>();
+    private final List<Short> attributesToRetain = new ArrayList<Short>();
+    private final List<Short> attributesToRemove = new ArrayList<Short>();
     private final File referenceFasta;
     private final Integer read1BasesTrimmed;
     private final Integer read2BasesTrimmed;
@@ -197,13 +199,16 @@ public abstract class AbstractAlignmentMerger {
         }
         header.setSequenceDictionary(this.sequenceDictionary);
         if (attributesToRetain != null) {
-            this.attributesToRetain.addAll(attributesToRetain);
+            for(String attribute : attributesToRetain)
+                this.attributesToRetain.add(SAMTagUtil.makeBinaryTag(attribute));
         }
         if (attributesToRemove != null) {
-            this.attributesToRemove.addAll(attributesToRemove);
+            for(String attribute : attributesToRemove)
+                this.attributesToRemove.add(SAMTagUtil.makeBinaryTag(attribute));
+
             // attributesToRemove overrides attributesToRetain
             if (!this.attributesToRetain.isEmpty()) {
-                for (String attribute : this.attributesToRemove) {
+                for (Short attribute : this.attributesToRemove) {
                     if (this.attributesToRetain.contains(attribute)) {
                         log.info("Overriding retaining the " + attribute + " tag since remove overrides retain.");
                         this.attributesToRetain.remove(attribute);
@@ -404,10 +409,10 @@ public abstract class AbstractAlignmentMerger {
             if (!rec.getReadUnmappedFlag()) {
                 if (refSeq != null) {
                     final byte[] referenceBases = refSeq.get(sequenceDictionary.getSequenceIndex(rec.getReferenceName())).getBases();
-                    rec.setAttribute(SAMTag.NM.name(), SequenceUtil.calculateSamNmTag(rec, referenceBases, 0, bisulfiteSequence));
+                    rec.setAttribute(SAMTagUtil.NM, SequenceUtil.calculateSamNmTag(rec, referenceBases, 0, bisulfiteSequence));
 
                     if (rec.getBaseQualities() != ReadRecord.NULL_QUALS) {
-                        rec.setAttribute(SAMTag.UQ.name(), SequenceUtil.sumQualitiesOfMismatches(rec, referenceBases, 0, bisulfiteSequence));
+                        rec.setAttribute(SAMTagUtil.UQ, SequenceUtil.sumQualitiesOfMismatches(rec, referenceBases, 0, bisulfiteSequence));
                     }
                 }
             }
@@ -455,7 +460,7 @@ public abstract class AbstractAlignmentMerger {
     private void transferAlignmentInfoToFragment(final ReadRecord unaligned, final ReadRecord aligned) {
         setValuesFromAlignment(unaligned, aligned);
         updateCigarForTrimmedOrClippedBases(unaligned, aligned);
-        if (SAMUtils.cigarMapsNoBasesToRef(unaligned.getCigar())) {
+        if (SAMUtils.cigarMapsNoBasesToRef(unaligned)) {
             SAMUtils.makeReadUnmapped(unaligned);
         } else if (SAMUtils.recordMapsEntirelyBeyondEndOfReference(aligned)) {
             log.warn("Record mapped off end of reference; making unmapped: " + aligned);
@@ -501,6 +506,8 @@ public abstract class AbstractAlignmentMerger {
                     final int posDiff = pos.getAlignmentEnd() - neg.getAlignmentEnd();
                     final int negDiff = pos.getAlignmentStart() - neg.getAlignmentStart();
 
+                    //TODO uncomment these
+                    /*
                     if (posDiff > 0) {
                         CigarUtil.softClip3PrimeEndOfRead(pos, Math.min(pos.getReadLength(),
                                 pos.getReadLength() - posDiff + 1));
@@ -510,6 +517,7 @@ public abstract class AbstractAlignmentMerger {
                         CigarUtil.softClip3PrimeEndOfRead(neg, Math.min(neg.getReadLength(),
                                 neg.getReadLength() - negDiff + 1));
                     }
+                    */
 
                 }
             }
@@ -529,10 +537,10 @@ public abstract class AbstractAlignmentMerger {
      * @param alignment     The alignment record
      */
     protected void setValuesFromAlignment(final ReadRecord rec, final ReadRecord alignment) {
-        for (final ReadRecord.SAMTagAndValue attr : alignment.getAttributes()) {
+        for (short attr : ((FastBAMRecord) alignment).getAttributesIterator()) {
             // Copy over any non-reserved attributes.  attributesToRemove overrides attributesToRetain.
-            if ((!isReservedTag(attr.tag) || this.attributesToRetain.contains(attr.tag)) && !this.attributesToRemove.contains(attr.tag)) {
-               rec.setAttribute(attr.tag, attr.value);
+            if ((!isReservedTag(attr) || this.attributesToRetain.contains(attr)) && !this.attributesToRemove.contains(attr)) {
+                ((FastBAMRecord) rec).copyAttributeFrom((FastBAMRecord) alignment, attr);
             }
         }
         rec.setReadUnmappedFlag(alignment.getReadUnmappedFlag());
@@ -547,7 +555,7 @@ public abstract class AbstractAlignmentMerger {
         rec.setSupplementaryAlignmentFlag(alignment.getSupplementaryAlignmentFlag());
         if (!alignment.getReadUnmappedFlag()) {
             // only aligned reads should have cigar and mapping quality set
-            rec.setCigar(alignment.getCigar());  // cigar may change when a
+            ((FastBAMRecord) rec).copyCigarFrom((FastBAMRecord) alignment);  // cigar may change when a
                                                  // clipCigar called below
             rec.setMappingQuality(alignment.getMappingQuality());
         }
@@ -623,17 +631,19 @@ public abstract class AbstractAlignmentMerger {
                 ? this.read1BasesTrimmed != null ? this.read1BasesTrimmed : 0
                 : this.read2BasesTrimmed != null ? this.read2BasesTrimmed : 0;
         final int notWritten = originalReadLength - (alignmentReadLength + trimmed);
-       
-        // Update cigar if the mate maps off the reference
-        createNewCigarsIfMapsOffEndOfReference(rec);
 
-        rec.setCigar(CigarUtil.addSoftClippedBasesToEndsOfCigar(
-            rec.getCigar(), rec.getReadNegativeStrandFlag(), notWritten, trimmed));
+
+        //TODO uncomment this
+        // Update cigar if the mate maps off the reference
+        //createNewCigarsIfMapsOffEndOfReference(rec);
+
+        //rec.setCigar(CigarUtil.addSoftClippedBasesToEndsOfCigar(
+        //    rec.getCigar(), rec.getReadNegativeStrandFlag(), notWritten, trimmed));
 
         // If the adapter sequence is marked and clipAdapter is true, clip it
-        if (this.clipAdapters && rec.getAttribute(ReservedTagConstants.XT) != null){
-            CigarUtil.softClip3PrimeEndOfRead(rec, rec.getIntegerAttribute(ReservedTagConstants.XT));
-        }
+        //if (this.clipAdapters && rec.getAttribute(SAMTagUtil.getSingleton().XT) != null){
+        //    CigarUtil.softClip3PrimeEndOfRead(rec, rec.getIntegerAttribute(ReservedTagConstants.XT));
+        //}
     }
 
 
@@ -650,8 +660,8 @@ public abstract class AbstractAlignmentMerger {
         SAMUtils.chainSAMProgramRecord(header, pg);
     }
 
-    protected boolean isReservedTag(final String tag) {
-        final char firstCharOfTag = tag.charAt(0);
+    protected boolean isReservedTag(final short tag) {
+        final char firstCharOfTag = (char) ((tag >> 8) & 0xFF);
 
         // All tags that start with a lower-case letter are user defined and should not be overridden by aligner
         // unless explicitly specified in attributesToRetain.

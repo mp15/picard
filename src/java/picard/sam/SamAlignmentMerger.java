@@ -1,8 +1,8 @@
 package picard.sam;
 
 import htsjdk.samtools.BAMRecordCodec;
-import htsjdk.samtools.CigarElement;
 import htsjdk.samtools.CigarOperator;
+import htsjdk.samtools.FastBAMRecord;
 import htsjdk.samtools.MergingSamRecordIterator;
 import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.SAMFileHeader;
@@ -344,10 +344,9 @@ public class SamAlignmentMerger extends AbstractAlignmentMerger {
     protected boolean ignoreAlignment(final ReadRecord sam) {
         if (maxGaps == -1) return false;
         int gaps = 0;
-        for (final CigarElement el : sam.getCigar().getCigarElements()) {
-            if (el.getOperator() == CigarOperator.I || el.getOperator() == CigarOperator.D ) {
+        for (final CigarOperator op : ((FastBAMRecord) sam).getCigarOps()) {
+            if (op == CigarOperator.I || op == CigarOperator.D )
                 gaps++;
-            }
         }
         return gaps > maxGaps;
     }

@@ -26,6 +26,7 @@ package picard.sam;
 import htsjdk.samtools.Cigar;
 import htsjdk.samtools.CigarElement;
 import htsjdk.samtools.CigarOperator;
+import htsjdk.samtools.FastBAMRecord;
 import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.SAMRecordQueryNameComparator;
 import htsjdk.samtools.SAMTag;
@@ -74,11 +75,11 @@ class MultiHitAlignedReadIterator implements CloseableIterator<HitsForInsert> {
                 new SamRecordFilter() {
                     // Filter unmapped reads.
                     public boolean filterOut(final ReadRecord record) {
-                        return record.getReadUnmappedFlag() || SAMUtils.cigarMapsNoBasesToRef(record.getCigar());
+                        return record.getReadUnmappedFlag() || SAMUtils.cigarMapsNoBasesToRef(record);
                     }
                     public boolean filterOut(final ReadRecord first, final ReadRecord second) {
-                        return ((first.getReadUnmappedFlag() || SAMUtils.cigarMapsNoBasesToRef(first.getCigar()))
-                                && (second.getReadUnmappedFlag() || SAMUtils.cigarMapsNoBasesToRef(second.getCigar())));
+                        return ((first.getReadUnmappedFlag() || SAMUtils.cigarMapsNoBasesToRef(first))
+                                && (second.getReadUnmappedFlag() || SAMUtils.cigarMapsNoBasesToRef(second)));
                     }
                 }));
 
@@ -122,7 +123,7 @@ class MultiHitAlignedReadIterator implements CloseableIterator<HitsForInsert> {
         // Accumulate the alignments matching readName.
         do {
             final ReadRecord rec = peekIterator.next();
-            replaceHardWithSoftClips(rec);
+            replaceHardWithSoftClips((FastBAMRecord) rec);
             // It is critical to do this here, because SamAlignmentMerger uses this exception to determine
             // if the aligned input needs to be sorted.
             if (peekIterator.hasNext() && queryNameComparator.fileOrderCompare(rec, peekIterator.peek()) > 0) {
@@ -173,15 +174,23 @@ class MultiHitAlignedReadIterator implements CloseableIterator<HitsForInsert> {
     }
 
     /** Replaces hard clips with soft clips and fills in bases and qualities with dummy values as needed. */
-    private void replaceHardWithSoftClips(final ReadRecord rec) {
+    private void replaceHardWithSoftClips(final FastBAMRecord rec) {
         if (rec.getReadUnmappedFlag()) return;
-        if (rec.getCigar().isEmpty()) return;
+        if (rec.getCigarLength() == 0) return;
 
+        /*
         List<CigarElement> elements = rec.getCigar().getCigarElements();
         final CigarElement first = elements.get(0);
         final CigarElement last  = elements.size() == 1 ? null : elements.get(elements.size()-1);
         final int startHardClip = first.getOperator() == CigarOperator.H ? first.getLength() : 0;
         final int endHardClip   = (last != null && last.getOperator() == CigarOperator.H) ? last.getLength() : 0;
+
+         */
+
+        final CigarOperator firstOp = rec.getCigarOp(0);
+        final CigarOperator lastOp  = rec.getCigarLength() == 1 ? null : rec.getCigarOp(rec.getCigarLength()-1);
+        final int startHardClip = firstOp == CigarOperator.H ? rec.getCigarOpLength(0) : 0;
+        final int endHardClip   = (lastOp != null && lastOp == CigarOperator.H) ? rec.getCigarOpLength(rec.getCigarLength()-1) : 0;
 
         if (startHardClip + endHardClip > 0) {
             final int len = rec.getReadBases().length + startHardClip + endHardClip;
@@ -197,14 +206,12 @@ class MultiHitAlignedReadIterator implements CloseableIterator<HitsForInsert> {
             System.arraycopy(rec.getBaseQualities(), 0, quals, startHardClip, rec.getBaseQualities().length);
 
             // Fix the cigar!
-            elements = new ArrayList<CigarElement>(elements); // make it modifiable
-            if (startHardClip > 0) elements.set(0, new CigarElement(first.getLength(), CigarOperator.S));
-            if (endHardClip   > 0) elements.set(elements.size()-1, new CigarElement(last.getLength(), CigarOperator.S));
+            if (startHardClip > 0) rec.setCigarOp(0, CigarOperator.S);
+            if (endHardClip   > 0) rec.setCigarOp(rec.getCigarLength()-1, CigarOperator.S);
 
             // Set the update structures on the new record
             rec.setReadBases(bases);
             rec.setBaseQualities(quals);
-            rec.setCigar(new Cigar(elements));
         }
    }
 
