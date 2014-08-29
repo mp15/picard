@@ -57,10 +57,10 @@ public class GenotypeConcordanceTest {
         outputFile.deleteOnExit();
 
         final GenotypeConcordance genotypeConcordance = new GenotypeConcordance();
-        genotypeConcordance.VCF1 = vcf1;
-        genotypeConcordance.SAMPLE1 = sample1;
-        genotypeConcordance.VCF2 = vcf2;
-        genotypeConcordance.SAMPLE2 = sample2;
+        genotypeConcordance.TRUTH_VCF = vcf1;
+        genotypeConcordance.TRUTH_SAMPLE = sample1;
+        genotypeConcordance.CALL_VCF = vcf2;
+        genotypeConcordance.CALL_SAMPLE = sample2;
         genotypeConcordance.OUTPUT = outputFile;
         final int returnCode = genotypeConcordance.instanceMain(new String[0]);
         Assert.assertEquals(returnCode, 0);

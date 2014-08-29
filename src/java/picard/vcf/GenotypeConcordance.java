@@ -31,20 +31,20 @@ import java.util.List;
  *
  */
 public class GenotypeConcordance extends CommandLineProgram {
-    @Option(shortName = "V1")
-    public File VCF1;
+    @Option(shortName = "TV")
+    public File TRUTH_VCF;
 
-    @Option(shortName = "V2")
-    public File VCF2;
+    @Option(shortName = "CV")
+    public File CALL_VCF;
 
     @Option(shortName = StandardOptionDefinitions.OUTPUT_SHORT_NAME, optional=true, doc="File to output report to, otherwise standard out.")
     public File OUTPUT;
 
-    @Option(shortName = "S1")
-    public String SAMPLE1;
+    @Option(shortName = "TS")
+    public String TRUTH_SAMPLE;
 
-    @Option(shortName = "S2")
-    public String SAMPLE2;
+    @Option(shortName = "CS")
+    public String CALL_SAMPLE;
 
     @Option()
     public List<File> INTERVALS;
@@ -69,30 +69,30 @@ public class GenotypeConcordance extends CommandLineProgram {
     }
 
     @Override protected int doWork() {
-        IOUtil.assertFileIsReadable(VCF1);
-        IOUtil.assertFileIsReadable(VCF2);
+        IOUtil.assertFileIsReadable(TRUTH_VCF);
+        IOUtil.assertFileIsReadable(CALL_VCF);
         if (OUTPUT != null) IOUtil.assertFileIsWritable(OUTPUT);
         final boolean usingIntervals = this.INTERVALS != null && this.INTERVALS.size() > 0;
-        final VCFFileReader r1 = new VCFFileReader(VCF1, usingIntervals);
-        final VCFFileReader r2 = new VCFFileReader(VCF2, usingIntervals);
+        final VCFFileReader truthReader = new VCFFileReader(TRUTH_VCF, usingIntervals);
+        final VCFFileReader callReader = new VCFFileReader(CALL_VCF, usingIntervals);
 
         // Check that the samples actually exist in the files!
-        if (!r1.getFileHeader().getSampleNamesInOrder().contains(SAMPLE1)) {
-            throw new PicardException("File " + VCF1.getAbsolutePath() + " does not contain genotypes for sample " + SAMPLE1);
+        if (!truthReader.getFileHeader().getSampleNamesInOrder().contains(TRUTH_SAMPLE)) {
+            throw new PicardException("File " + TRUTH_VCF.getAbsolutePath() + " does not contain genotypes for sample " + TRUTH_SAMPLE);
         }
-        if (!r2.getFileHeader().getSampleNamesInOrder().contains(SAMPLE2)) {
-            throw new PicardException("File " + VCF2.getAbsolutePath() + " does not contain genotypes for sample " + SAMPLE2);
+        if (!callReader.getFileHeader().getSampleNamesInOrder().contains(CALL_SAMPLE)) {
+            throw new PicardException("File " + CALL_VCF.getAbsolutePath() + " does not contain genotypes for sample " + CALL_SAMPLE);
         }
 
         // TODO: optimization to only use the index if accessing less than < 25% of file?
-        // TODO: Add sample1/sample2 detail section.
+        // TODO: Add truthSample/callSample detail section.
 
         // TODO: maybe add optimization if the samples are in the same file??
         // TODO: add option for auto-detect pairs based on same sample name
         // TODO: allow multiple sample-pairs in one pass
 
         // Build the pair of iterators over the regions of interest
-        final Iterator<VariantContext> iterator1, iterator2;
+        final Iterator<VariantContext> truthIterator, callIterator;
         if (usingIntervals) {
             log.info("Loading up region lists.");
             IntervalList intervals = null;
@@ -105,29 +105,29 @@ public class GenotypeConcordance extends CommandLineProgram {
                 else intervals =              IntervalList.union(intervals, tmp);
             }
 
-            iterator1 = new MultiIntervalVariantIterator(r1, intervals.uniqued());
-            iterator2 = new MultiIntervalVariantIterator(r2, intervals.uniqued());
+            truthIterator = new MultiIntervalVariantIterator(truthReader, intervals.uniqued());
+            callIterator = new MultiIntervalVariantIterator(callReader, intervals.uniqued());
         }
         else {
-            iterator1 = r1.iterator();
-            iterator2 = r2.iterator();
+            truthIterator = truthReader.iterator();
+            callIterator = callReader.iterator();
         }
 
         // Now do the iteration and count things up
-        final PairedVariantContextIterator iterator = new PairedVariantContextIterator(iterator1, iterator2, r1.getFileHeader().getSequenceDictionary());
-        final ConcordanceResults snpCounter   = new ConcordanceResults(SAMPLE1, SAMPLE2);
-        final ConcordanceResults indelCounter = new ConcordanceResults(SAMPLE1, SAMPLE2);
+        final PairedVariantContextIterator iterator = new PairedVariantContextIterator(truthIterator, callIterator, truthReader.getFileHeader().getSequenceDictionary());
+        final ConcordanceResults snpCounter   = new ConcordanceResults(TRUTH_SAMPLE, CALL_SAMPLE);
+        final ConcordanceResults indelCounter = new ConcordanceResults(TRUTH_SAMPLE, CALL_SAMPLE);
         log.info("Starting iteration over variants.");
 
         while (iterator.hasNext()) {
             final VcTuple tuple = iterator.next();
-            final State state1 = determineState(tuple.vc1, SAMPLE1, MIN_GQ, MIN_DP);
-            final State state2 = determineState(tuple.vc2, SAMPLE2, MIN_GQ, MIN_DP);
+            final State truthState = determineState(tuple.truthVariantContext, TRUTH_SAMPLE, MIN_GQ, MIN_DP);
+            final State callState = determineState(tuple.callVariantContext, CALL_SAMPLE, MIN_GQ, MIN_DP);
 
-            if (isSnp(tuple)) snpCounter.add(state1, state2);
-            else indelCounter.add(state1, state2);
+            if (isSnp(tuple)) snpCounter.add(truthState, callState);
+            else indelCounter.add(truthState, callState);
 
-            progress.record(tuple.vc1 == null ? tuple.vc2.getChr() : tuple.vc1.getChr(), tuple.vc1 == null ? tuple.vc2.getStart() : tuple.vc1.getStart());
+            progress.record(tuple.truthVariantContext == null ? tuple.callVariantContext.getChr() : tuple.truthVariantContext.getChr(), tuple.truthVariantContext == null ? tuple.callVariantContext.getStart() : tuple.truthVariantContext.getStart());
         }
 
         final PrintStream out;
@@ -141,10 +141,10 @@ public class GenotypeConcordance extends CommandLineProgram {
 
         final FormatUtil fmt = new FormatUtil();
         out.println("## Summary table:");
-        out.println("Event Type\tSample1\tSample2\tHet Sens.\tHomVar Sens.\tHet PPV\tHomVar PPV\tVariant Sens.\tVariant PPV");
+        out.println("Event Type\tTruth Sample\tCall Sample\tHet Sens.\tHomVar Sens.\tHet PPV\tHomVar PPV\tVariant Sens.\tVariant PPV");
         out.println("SNP" + "\t" +
-                    snpCounter.getSample1() + "\t" +
-                    snpCounter.getSample2() + "\t" +
+                    snpCounter.getTruthSample() + "\t" +
+                    snpCounter.getCallSample() + "\t" +
                     fmt.format(snpCounter.hetSensitivity()) + "\t" +
                     fmt.format(snpCounter.homVarSensitivity()) + "\t" +
                     fmt.format(snpCounter.hetPpv()) + "\t" +
@@ -153,8 +153,8 @@ public class GenotypeConcordance extends CommandLineProgram {
                     fmt.format(snpCounter.varPpv())
         );
         out.println("Indel" + "\t" +
-                    indelCounter.getSample1() + "\t" +
-                    indelCounter.getSample2() + "\t" +
+                    indelCounter.getTruthSample() + "\t" +
+                    indelCounter.getCallSample() + "\t" +
                     fmt.format(indelCounter.hetSensitivity()) + "\t" +
                     fmt.format(indelCounter.homVarSensitivity()) + "\t" +
                     fmt.format(indelCounter.hetPpv()) + "\t" +
@@ -173,18 +173,18 @@ public class GenotypeConcordance extends CommandLineProgram {
     /** Outputs the detailed tables for SNP and Indel match categories. */
     private void outputDetailsTable(final PrintStream out, final ConcordanceResults counter, final String description) {
         out.println("## " + description + ":");
-        for (final State state1 : State.values()) {
-            for (final State state2 : State.values()) {
-                final long count = counter.getCount(state1, state2);
-                if (count > 0 || OUTPUT_ALL_ROWS) out.println(state1 + "\t" + state2 + "\t" + count);
+        for (final State truthSate : State.values()) {
+            for (final State callState : State.values()) {
+                final long count = counter.getCount(truthSate, callState);
+                if (count > 0 || OUTPUT_ALL_ROWS) out.println(truthSate + "\t" + callState + "\t" + count);
             }
         }
     }
 
     /** Determines if the locus is a SNP by querying the first VC first, and only if that is null querying the second VC. */
     final boolean isSnp(final VcTuple tuple) {
-        if (tuple.vc1 != null) return tuple.vc1.isSNP();
-        else return tuple.vc2.isSNP();
+        if (tuple.truthVariantContext != null) return tuple.truthVariantContext.isSNP();
+        else return tuple.callVariantContext.isSNP();
     }
 
     /** Determines the classification for a single sample at a single locus. */
@@ -245,52 +245,52 @@ class MultiIntervalVariantIterator implements Iterator<VariantContext> {
 /**
  * Enum class that provides a total classification for a call, or lack thereof, for a sample at a locus.
  */
-enum State {HomRef, Het, HomVar, FilteredVariant, FilteredGenotype, LowGq, LowDp, NoCall, NoVariant};
+enum State {HomRef, Het, HomVar, FilteredVariant, FilteredGenotype, LowGq, LowDp, NoCall, NoVariant}
 
 /** Little class to hold a pair of VariantContexts that are in sync with one another. */
 class VcTuple {
-    public final VariantContext vc1;
-    public final VariantContext vc2;
+    public final VariantContext truthVariantContext;
+    public final VariantContext callVariantContext;
 
-    VcTuple(final VariantContext vc1, final VariantContext vc2) {
-        this.vc1 = vc1;
-        this.vc2 = vc2;
+    VcTuple(final VariantContext truthVariantContext, final VariantContext callVariantContext) {
+        this.truthVariantContext = truthVariantContext;
+        this.callVariantContext = callVariantContext;
     }
 }
 
 /** Iterator that takes a pair of iterators over VariantContexts and iterates over them in tandem. */
 class PairedVariantContextIterator implements Iterator<VcTuple> {
-    private final PeekableIterator<VariantContext> iterator1;
-    private final PeekableIterator<VariantContext> iterator2;
+    private final PeekableIterator<VariantContext> truthIterator;
+    private final PeekableIterator<VariantContext> callIterator;
     private final VariantContextComparator comparator;
 
-    PairedVariantContextIterator(final Iterator<VariantContext> iterator1, final Iterator<VariantContext> iterator2, final SAMSequenceDictionary dict) {
-        this.iterator1 = new PeekableIterator<VariantContext>(iterator1);
-        this.iterator2 = new PeekableIterator<VariantContext>(iterator2);
+    PairedVariantContextIterator(final Iterator<VariantContext> truthIterator, final Iterator<VariantContext> callIterator, final SAMSequenceDictionary dict) {
+        this.truthIterator = new PeekableIterator<VariantContext>(truthIterator);
+        this.callIterator = new PeekableIterator<VariantContext>(callIterator);
         this.comparator = new VariantContextComparator(dict);
     }
 
     @Override
     public boolean hasNext() {
-        return this.iterator1.hasNext() || this.iterator2.hasNext();
+        return this.truthIterator.hasNext() || this.callIterator.hasNext();
     }
 
     @Override
     public VcTuple next() {
         if (!hasNext()) throw new IllegalStateException("next() called while hasNext() is false.");
 
-        final VariantContext vc1 = this.iterator1.hasNext() ? this.iterator1.peek() : null;
-        final VariantContext vc2 = this.iterator2.hasNext() ? this.iterator2.peek() : null;
+        final VariantContext truthIterator = this.truthIterator.hasNext() ? this.truthIterator.peek() : null;
+        final VariantContext callIterator = this.callIterator.hasNext() ? this.callIterator.peek() : null;
 
         // If one or the other is null because there is no next, just return a one-sided tuple
-        if (vc1 == null)       return new VcTuple(null,                  this.iterator2.next());
-        else if (vc2 == null)  return new VcTuple(this.iterator1.next(), null);
+        if (truthIterator == null)       return new VcTuple(null,                  this.callIterator.next());
+        else if (callIterator == null)  return new VcTuple(this.truthIterator.next(), null);
 
         // Otherwise check the ordering and do the right thing
-        final int ordering = this.comparator.compare(vc1, vc2);
-        if (ordering == 0)     return new VcTuple(this.iterator1.next(), this.iterator2.next());
-        else if (ordering < 0) return new VcTuple(this.iterator1.next(), null);
-        else                   return new VcTuple(null,                  this.iterator2.next());
+        final int ordering = this.comparator.compare(truthIterator, callIterator);
+        if (ordering == 0)     return new VcTuple(this.truthIterator.next(), this.callIterator.next());
+        else if (ordering < 0) return new VcTuple(this.truthIterator.next(), null);
+        else                   return new VcTuple(null,                  this.callIterator.next());
     }
 
     @Override public void remove() {
@@ -300,11 +300,11 @@ class PairedVariantContextIterator implements Iterator<VcTuple> {
 
 class ConcordanceResults {
     private static class TwoState implements Comparable<TwoState> {
-        final State state1, state2;
+        final State truthState, callState;
 
-        private TwoState(final State state1, final State state2) {
-            this.state1 = state1;
-            this.state2 = state2;
+        private TwoState(final State truthState, final State callState) {
+            this.truthState = truthState;
+            this.callState = callState;
         }
 
         @Override public boolean equals(final Object o) {
@@ -314,38 +314,38 @@ class ConcordanceResults {
         }
 
         @Override public int hashCode() {
-            int result = state1.hashCode();
-            result = 31 * result + state2.hashCode();
+            int result = truthState.hashCode();
+            result = 31 * result + callState.hashCode();
             return result;
         }
 
         @Override public int compareTo(final TwoState that) {
-            int result = this.state1.compareTo(that.state1);
-            if (result == 0) result = this.state2.compareTo(that.state2);
+            int result = this.truthState.compareTo(that.truthState);
+            if (result == 0) result = this.callState.compareTo(that.callState);
             return result;
         }
     }
 
     private final Histogram<TwoState> counts = new Histogram<TwoState>();
-    private String sample1, sample2;
+    private final String truthSample, callSample;
 
-    ConcordanceResults(final String sample1, final String sample2) {
-        this.sample1 = sample1;
-        this.sample2 = sample2;
+    ConcordanceResults(final String truthSample, final String callSample) {
+        this.truthSample = truthSample;
+        this.callSample = callSample;
     }
 
-    void add(final State state1, final State state2) {
-        this.counts.increment(new TwoState(state1, state2));
+    void add(final State truthState, final State callState) {
+        this.counts.increment(new TwoState(truthState, callState));
     }
 
-    long getCount(final State state1, final State state2) {
-        final Histogram<TwoState>.Bin bin = this.counts.get(new TwoState(state1, state2));
+    long getCount(final State truthState, final State callState) {
+        final Histogram<TwoState>.Bin bin = this.counts.get(new TwoState(truthState, callState));
         if (bin == null) return 0;
         else return (long) bin.getValue();
     }
 
-    public String getSample2() { return sample2; }
-    public String getSample1() { return sample1; }
+    public String getCallSample() { return callSample; }
+    public String getTruthSample() { return truthSample; }
 
     double hetSensitivity() {
         return fraction(EnumSet.of(State.Het), EnumSet.of(State.Het),
@@ -381,12 +381,12 @@ class ConcordanceResults {
         return sum(lhsNum, rhsNum) / sum(lhsDenom, rhsDenom);
     }
 
-    /** Sums the counts where the first state is contains in lhs and the second state is contained in rhs. */
-    private double sum(final EnumSet<State> lhs, final EnumSet<State> rhs) {
+    /** Sums the counts where the first state is contains in truthStateSet and the second state is contained in callStateSet. */
+    private double sum(final EnumSet<State> truthStateSet, final EnumSet<State> callStateSet) {
         double result = 0;
-        for (final State s1 : lhs) {
-            for (final State s2 : rhs) {
-                result += getCount(s1, s2);
+        for (final State truthState : truthStateSet) {
+            for (final State callState : callStateSet) {
+                result += getCount(truthState, callState);
             }
         }
 
