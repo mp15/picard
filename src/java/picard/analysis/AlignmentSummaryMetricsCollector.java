@@ -4,9 +4,11 @@ import htsjdk.samtools.AlignmentBlock;
 import htsjdk.samtools.BAMRecord;
 import htsjdk.samtools.CigarElement;
 import htsjdk.samtools.CigarOperator;
+import htsjdk.samtools.FastBAMRecord;
 import htsjdk.samtools.ReadRecord;
 import htsjdk.samtools.ReservedTagConstants;
 import htsjdk.samtools.SAMReadGroupRecord;
+import htsjdk.samtools.SAMTagUtil;
 import htsjdk.samtools.metrics.MetricsFile;
 import htsjdk.samtools.reference.ReferenceSequence;
 import htsjdk.samtools.util.CoordMath;
@@ -262,7 +264,7 @@ public class AlignmentSummaryMetricsCollector extends SAMRecordAndReferenceMulti
 
             private void collectReadData(final ReadRecord record, final ReferenceSequence ref) {
                 metrics.TOTAL_READS++;
-                readLengthHistogram.increment(record.getReadBases().length);
+                readLengthHistogram.increment(record.getReadLength());
 
                 if (!record.getReadFailsVendorQualityCheckFlag()) {
                     metrics.PF_READS++;
@@ -285,7 +287,7 @@ public class AlignmentSummaryMetricsCollector extends SAMRecordAndReferenceMulti
                             metrics.READS_ALIGNED_IN_PAIRS++;
 
                             // Check that both ends have mapq > minimum
-                            final Integer mateMq = record.getIntegerAttribute("MQ");
+                            final Integer mateMq = ((FastBAMRecord) record).getIntegerAttribute(SAMTagUtil.MQ);
                             if (mateMq == null || mateMq >= MAPPING_QUALITY_THRESOLD && record.getMappingQuality() >= MAPPING_QUALITY_THRESOLD) {
                                 ++this.chimerasDenominator;
 
@@ -365,15 +367,14 @@ public class AlignmentSummaryMetricsCollector extends SAMRecordAndReferenceMulti
                     hqMismatchHistogram.increment(hqMismatchCount);
 
                     // Add any insertions and/or deletions to the global count
-                    for (final CigarElement elem : record.getCigar().getCigarElements()) {
-                        final CigarOperator op = elem.getOperator();
+                    for (final CigarOperator op : ((FastBAMRecord) record).getCigarOps()) {
                         if (op == CigarOperator.INSERTION || op == CigarOperator.DELETION) ++ this.indels;
                     }
                 }
             }
 
             private boolean isNoiseRead(final ReadRecord record) {
-                final Object noiseAttribute = record.getAttribute(ReservedTagConstants.XN);
+                final Object noiseAttribute = record.getAttribute(SAMTagUtil.XN);
                 return (noiseAttribute != null && noiseAttribute.equals(1));
             }
 
