@@ -31,19 +31,19 @@ import java.util.List;
  *
  */
 public class GenotypeConcordance extends CommandLineProgram {
-    @Option(shortName = "TV")
+    @Option(shortName = "TV", doc="The VCF containing the truth sample")
     public File TRUTH_VCF;
 
-    @Option(shortName = "CV")
+    @Option(shortName = "CV", doc="The VCF containing the call sample")
     public File CALL_VCF;
 
     @Option(shortName = StandardOptionDefinitions.OUTPUT_SHORT_NAME, optional=true, doc="File to output report to, otherwise standard out.")
     public File OUTPUT;
 
-    @Option(shortName = "TS")
+    @Option(shortName = "TS", doc="The name of the truth sample within the truth VCF")
     public String TRUTH_SAMPLE;
 
-    @Option(shortName = "CS")
+    @Option(shortName = "CS", doc="The name of the call sample within the call VCF")
     public String CALL_SAMPLE;
 
     @Option()
