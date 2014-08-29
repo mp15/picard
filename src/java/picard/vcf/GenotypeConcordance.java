@@ -84,12 +84,12 @@ public class GenotypeConcordance extends CommandLineProgram {
             throw new PicardException("File " + VCF2.getAbsolutePath() + " does not contain genotypes for sample " + SAMPLE2);
         }
 
-        // TODO: maybe add optimization if the samples are in the same file??
         // TODO: optimization to only use the index if accessing less than < 25% of file?
-        // TODO: add sample names to output
+        // TODO: Add sample1/sample2 detail section.
+
+        // TODO: maybe add optimization if the samples are in the same file??
         // TODO: add option for auto-detect pairs based on same sample name
         // TODO: allow multiple sample-pairs in one pass
-        // TODO: output to file?
 
         // Build the pair of iterators over the regions of interest
         final Iterator<VariantContext> iterator1, iterator2;
@@ -139,14 +139,9 @@ public class GenotypeConcordance extends CommandLineProgram {
             catch (final IOException ioe) { throw new RuntimeIOException(ioe); }
         }
 
-        outputDetailsTable(out, snpCounter, "SNP Detailed Concordance");
-        outputDetailsTable(out, indelCounter, "InDel Detailed Concordance");
-
-
         final FormatUtil fmt = new FormatUtil();
-        out.println();
         out.println("## Summary table:");
-        out.println("Sample1\tSample2\tEvent Type\tHet Sens.\tHomVar Sens.\tHet PPV\tHomVar PPV\tVariant Sens.\tVariant PPV");
+        out.println("Event Type\tSample1\tSample2\tHet Sens.\tHomVar Sens.\tHet PPV\tHomVar PPV\tVariant Sens.\tVariant PPV");
         out.println("SNP" + "\t" +
                     snpCounter.getSample1() + "\t" +
                     snpCounter.getSample2() + "\t" +
@@ -167,6 +162,10 @@ public class GenotypeConcordance extends CommandLineProgram {
                     fmt.format(indelCounter.varSensitivity()) + "\t" +
                     fmt.format(indelCounter.varPpv())
         );
+        out.println();
+
+        outputDetailsTable(out, snpCounter, "SNP Detailed Concordance");
+        outputDetailsTable(out, indelCounter, "InDel Detailed Concordance");
 
         return 0;
     }

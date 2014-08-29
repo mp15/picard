@@ -1,0 +1,11 @@
+## Summary table:
+Event Type	Sample1	Sample2	Het Sens.	HomVar Sens.	Het PPV	HomVar PPV	Variant Sens.	Variant PPV
+SNP	NA12878	NA12878	?	?	?	?	?	?
+Indel	NA12878	NA12878	1	1	1	1	1	1
+
+## SNP Detailed Concordance:
+## InDel Detailed Concordance:
+HomRef	HomRef	2
+Het	Het	22
+HomVar	HomVar	12
+FilteredVariant	FilteredVariant	4
