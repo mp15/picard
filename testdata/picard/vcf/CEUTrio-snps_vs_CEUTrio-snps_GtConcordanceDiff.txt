@@ -1,5 +1,5 @@
 ## Summary table:
-Event Type	Sample1	Sample2	Het Sens.	HomVar Sens.	Het PPV	HomVar PPV	Variant Sens.	Variant PPV
+Event Type	Truth Sample	Call Sample	Het Sens.	HomVar Sens.	Het PPV	HomVar PPV	Variant Sens.	Variant PPV
 SNP	NA12878	NA12878	1	1	1	1	1	1
 Indel	NA12878	NA12878	?	?	?	?	?	?
 

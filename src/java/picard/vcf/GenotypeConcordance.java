@@ -64,6 +64,12 @@ public class GenotypeConcordance extends CommandLineProgram {
     private final Log log = Log.getInstance(GenotypeConcordance.class);
     private final ProgressLogger progress = new ProgressLogger(log, 10000, "checked", "variants");
 
+    protected ConcordanceResults snpCounter;
+    public ConcordanceResults getSnpCounter() { return snpCounter; }
+
+    protected ConcordanceResults indelCounter;
+    public ConcordanceResults getIndelCounter() { return indelCounter; }
+
     public static void main(final String[] args) {
         new GenotypeConcordance().instanceMainWithExit(args);
     }
@@ -115,8 +121,8 @@ public class GenotypeConcordance extends CommandLineProgram {
 
         // Now do the iteration and count things up
         final PairedVariantContextIterator iterator = new PairedVariantContextIterator(truthIterator, callIterator, truthReader.getFileHeader().getSequenceDictionary());
-        final ConcordanceResults snpCounter   = new ConcordanceResults(TRUTH_SAMPLE, CALL_SAMPLE);
-        final ConcordanceResults indelCounter = new ConcordanceResults(TRUTH_SAMPLE, CALL_SAMPLE);
+        snpCounter   = new ConcordanceResults(TRUTH_SAMPLE, CALL_SAMPLE);
+        indelCounter = new ConcordanceResults(TRUTH_SAMPLE, CALL_SAMPLE);
         log.info("Starting iteration over variants.");
 
         while (iterator.hasNext()) {

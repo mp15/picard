@@ -1,0 +1,20 @@
+## Summary table:
+Event Type	Truth Sample	Call Sample	Het Sens.	HomVar Sens.	Het PPV	HomVar PPV	Variant Sens.	Variant PPV
+SNP	NA12878	NA12891	0.47	0.689655	0.51087	0.666667	0.78481	0.815789
+Indel	NA12878	NA12891	?	?	?	?	?	?
+
+## SNP Detailed Concordance:
+HomRef	HomRef	27
+HomRef	Het	27
+HomRef	LowDp	4
+Het	HomRef	25
+Het	Het	47
+Het	HomVar	20
+Het	LowDp	8
+HomVar	Het	17
+HomVar	HomVar	40
+HomVar	LowDp	1
+FilteredVariant	FilteredVariant	51
+LowDp	Het	1
+LowDp	LowDp	7
+## InDel Detailed Concordance:
