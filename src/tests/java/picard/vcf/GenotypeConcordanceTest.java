@@ -1,13 +1,17 @@
 package picard.vcf;
 
+import htsjdk.samtools.SAMFileHeader;
 import htsjdk.samtools.util.FormatUtil;
 import htsjdk.samtools.util.IOUtil;
+import htsjdk.samtools.util.Interval;
+import htsjdk.samtools.util.IntervalList;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,6 +43,7 @@ public class GenotypeConcordanceTest {
     private static final String CEU_TRIOS_SNPS_VS_CEU_TRIOS_SNPS_GC_MIN_GQ = "CEUTrio-snps_vs_CEUTrio-snps_GtConcordanceDiff_MinGq.txt";
     private static final String CEU_TRIOS_SNPS_VS_CEU_TRIOS_SNPS_GC_MIN_DP = "CEUTrio-snps_vs_CEUTrio-snps_GtConcordanceDiff_MinDp.txt";
 
+    private static final File INTERVALS_FILE = new File(TEST_DATA_PATH, "IntervalListChr1Small.interval_list");
 
     @AfterClass
     public void teardown() {
@@ -153,6 +158,73 @@ public class GenotypeConcordanceTest {
         Assert.assertEquals(fmt.format(concordanceResults.homVarPpv()), "0.630769");
         Assert.assertEquals(fmt.format(concordanceResults.varSensitivity()), "0.815951");
         Assert.assertEquals(fmt.format(concordanceResults.varPpv()), "0.810976");
+    }
+
+    @Test
+    public void testGenotypeConcordanceDetailsWithIntervals() throws Exception {
+        final GenotypeConcordance genotypeConcordance = new GenotypeConcordance();
+        genotypeConcordance.TRUTH_VCF = CEU_TRIOS_SNPS_VCF;
+        genotypeConcordance.TRUTH_SAMPLE = "NA12878";
+        genotypeConcordance.CALL_VCF = CEU_TRIOS_SNPS_VCF;
+        genotypeConcordance.CALL_SAMPLE = "NA12878";
+        genotypeConcordance.INTERVALS = Collections.singletonList(INTERVALS_FILE);
+
+        int returnCode = genotypeConcordance.instanceMain(new String[0]);
+        Assert.assertEquals(returnCode, 0);
+
+        final Map<TwoState, Integer> nonZeroCounts = new HashMap<TwoState, Integer>();
+        nonZeroCounts.put(new TwoState(State.HomRef, State.HomRef), 2);
+        nonZeroCounts.put(new TwoState(State.Het, State.Het), 1);
+        nonZeroCounts.put(new TwoState(State.FilteredVariant, State.FilteredVariant), 2);
+
+        ConcordanceResults concordanceResults = genotypeConcordance.getSnpCounter();
+        for (final State state1 : State.values()) {
+            for (final State state2 : State.values()) {
+                Integer expectedCount = nonZeroCounts.get(new TwoState(state1, state2));
+                if (expectedCount == null) expectedCount = 0;
+                Assert.assertEquals(concordanceResults.getCount(state1, state2), expectedCount.intValue());
+            }
+        }
+
+        final FormatUtil fmt = new FormatUtil();
+
+        Assert.assertEquals(fmt.format(concordanceResults.hetSensitivity()), "1");
+        Assert.assertEquals(fmt.format(concordanceResults.hetPpv()), "1");
+        Assert.assertEquals(fmt.format(concordanceResults.homVarSensitivity()), "?");
+        Assert.assertEquals(fmt.format(concordanceResults.homVarPpv()), "?");
+        Assert.assertEquals(fmt.format(concordanceResults.varSensitivity()), "1");
+        Assert.assertEquals(fmt.format(concordanceResults.varPpv()), "1");
+
+        // Now run it again with different samples
+        genotypeConcordance.TRUTH_VCF = CEU_TRIOS_SNPS_VCF;
+        genotypeConcordance.TRUTH_SAMPLE = "NA12878";
+        genotypeConcordance.CALL_VCF = CEU_TRIOS_SNPS_VCF;
+        genotypeConcordance.CALL_SAMPLE = "NA12891";
+        genotypeConcordance.INTERVALS = Collections.singletonList(INTERVALS_FILE);
+        returnCode = genotypeConcordance.instanceMain(new String[0]);
+        Assert.assertEquals(returnCode, 0);
+
+        nonZeroCounts.clear();
+        nonZeroCounts.put(new TwoState(State.HomRef, State.HomRef), 1);
+        nonZeroCounts.put(new TwoState(State.HomRef, State.Het), 1);
+        nonZeroCounts.put(new TwoState(State.Het, State.Het), 1);
+        nonZeroCounts.put(new TwoState(State.FilteredVariant, State.FilteredVariant), 2);
+
+        concordanceResults = genotypeConcordance.getSnpCounter();
+        for (final State state1 : State.values()) {
+            for (final State state2 : State.values()) {
+                Integer expectedCount = nonZeroCounts.get(new TwoState(state1, state2));
+                if (expectedCount == null) expectedCount = 0;
+                Assert.assertEquals(concordanceResults.getCount(state1, state2), expectedCount.intValue());
+            }
+        }
+
+        Assert.assertEquals(fmt.format(concordanceResults.hetSensitivity()), "1");
+        Assert.assertEquals(fmt.format(concordanceResults.hetPpv()), "0.5");
+        Assert.assertEquals(fmt.format(concordanceResults.homVarSensitivity()), "?");
+        Assert.assertEquals(fmt.format(concordanceResults.homVarPpv()), "?");
+        Assert.assertEquals(fmt.format(concordanceResults.varSensitivity()), "1");
+        Assert.assertEquals(fmt.format(concordanceResults.varPpv()), "0.5");
     }
 
     private static class TwoState implements Comparable<TwoState> {
